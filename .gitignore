@@ -1,0 +1,66 @@
+# ── Virtual environment ────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ── Claude Code ────────────────────────────────────────────────
+.claude/
+
+# ── Python cache ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Pytest ─────────────────────────────────────────────────────
+.pytest_cache/
+.cache/
+*.pytest_ini
+
+# ── Jupyter ────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Gurobi license (sensitive) ─────────────────────────────────
+gurobi.lic
+
+# ── OS files ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Build / dist ───────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# ── Logs ───────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Large model checkpoints ────────────────────────────────────
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+
+# ── Artifacts — keep JSON results and PNGs, ignore large bins ──
+artifacts/**/*.bin
+artifacts/**/*.pkl
+artifacts/**/*.npy
+
+# ── Secrets / API keys ─────────────────────────────────────────
+.env.local
+*.key
+secrets.json

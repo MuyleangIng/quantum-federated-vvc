@@ -1,0 +1,375 @@
+"""
+VVC (Volt-VAR Control) Gymnasium environments for IEEE 13-bus and 123-bus
+distribution feeders.
+
+Implements a linearized DistFlow power flow model:
+    V_i^2 ≈ V_j^2 - 2*(r_ij*P_ij + x_ij*Q_ij)
+
+Interface mirrors PowerGym so the agent code is simulator-agnostic.
+
+State (observation):
+    [V_pu at each bus | P_load at each bus | Q_load at each bus |
+     cap_status | reg_tap_normalized | battery_soc]
+
+Action (MultiDiscrete):
+    capacitors: ON(1)/OFF(0)
+    regulators: tap in {0..32}  → normalized to [-1, 1]
+    batteries:  charge level in {0..32} → normalized to [-1, 1]
+
+Reward:
+    r = -[α*f_vv + β*f_cl + γ*f_pl]
+    f_vv = sum of squared voltage violations outside [0.95, 1.05] pu
+    f_cl = capacitor switching cost (number of changes × penalty)
+    f_pl = total active power loss (pu)
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import gymnasium as gym
+from gymnasium import spaces
+
+
+# ---------------------------------------------------------------------------
+# IEEE 13-bus linearized network parameters
+# Branch data: (from_bus, to_bus, r_pu, x_pu) on 100 MVA, 4.16 kV base
+# Approximate values derived from IEEE 13 Node Test Feeder documentation.
+# ---------------------------------------------------------------------------
+
+_IEEE13_BRANCHES = [
+    # (from, to, r_pu,  x_pu)
+    (0, 1, 0.0153, 0.0197),
+    (1, 2, 0.0111, 0.0143),
+    (1, 3, 0.0666, 0.1585),
+    (3, 4, 0.1000, 0.2380),
+    (4, 5, 0.1950, 0.0000),   # voltage regulator (series impedance ~0)
+    (5, 6, 0.0510, 0.1360),
+    (6, 7, 0.1170, 0.1490),
+    (0, 8, 0.0000, 0.0000),   # substation transformer leg
+    (8, 9, 0.1530, 0.1967),
+    (9, 10, 0.1320, 0.1692),
+    (9, 11, 0.1140, 0.1464),
+    (11, 12, 0.0950, 0.1220),
+]
+
+# Base load at each bus (P_kW, Q_kVAR) — IEEE 13-bus total ≈ 3500 kW
+_IEEE13_BASE_LOADS = np.array([
+    [0,    0],     # bus 0 — substation
+    [160,  110],   # bus 1
+    [120,  90],    # bus 2
+    [170,  125],   # bus 3
+    [235,  175],   # bus 4
+    [128,  86],    # bus 5
+    [170,  125],   # bus 6
+    [385,  220],   # bus 7
+    [0,    0],     # bus 8 — substation branch
+    [485,  190],   # bus 9
+    [68,   60],    # bus 10
+    [290,  212],   # bus 11
+    [170,  80],    # bus 12
+], dtype=np.float32)
+
+# Capacitor bank buses and sizes (kVAR)
+_IEEE13_CAP_BUSES = [8, 11]        # 2 capacitors
+_IEEE13_CAP_SIZES = [600.0, 200.0] # kVAR
+
+# Voltage regulator branch index (the 4→5 branch = index 4)
+_IEEE13_REG_BRANCH = 4
+_IEEE13_N_REGS = 1
+_REG_TAPS = 33          # 0..32 → ratio in [0.9, 1.1]
+_BAT_LEVELS = 33        # 0..32 → SoC in [0, 1]
+
+# Base MVA & kV for per-unit conversion
+_BASE_MVA = 1.0         # 1 MVA base
+_BASE_KV = 4.16         # 4.16 kV base
+_BASE_KVA = _BASE_MVA * 1000
+
+V_MIN, V_MAX = 0.95, 1.05  # pu voltage limits
+
+
+def _build_incidence(n_buses: int, branches: list[tuple]) -> np.ndarray:
+    """Bus-branch incidence matrix A (n_buses × n_branches)."""
+    n_br = len(branches)
+    A = np.zeros((n_buses, n_br), dtype=np.float32)
+    for k, (i, j, _, _) in enumerate(branches):
+        A[i, k] = 1.0
+        A[j, k] = -1.0
+    return A
+
+
+def _tap_to_ratio(tap: int, n_taps: int = _REG_TAPS) -> float:
+    """Map tap integer [0, n_taps-1] to voltage ratio [0.9, 1.1]."""
+    return 0.9 + (tap / (n_taps - 1)) * 0.2
+
+
+def _distflow_voltages(
+    p_inj: np.ndarray,
+    q_inj: np.ndarray,
+    branches: list[tuple],
+    n_buses: int,
+    reg_tap: int = 16,
+) -> tuple[np.ndarray, float]:
+    """
+    Linearised DistFlow: propagate voltages from substation (bus 0, V=1 pu).
+    Returns (V_pu array, P_loss_pu scalar).
+    """
+    V2 = np.ones(n_buses, dtype=np.float32)   # V^2 in pu
+    P_flow = np.zeros(len(branches), dtype=np.float32)
+    Q_flow = np.zeros(len(branches), dtype=np.float32)
+
+    # Build load flow from leaves to root (backwards sweep — BFS order reversed)
+    # For a radial feeder we traverse branches in order (root → leaf = indices 0→N)
+    # Forward sweep: accumulate injections, then backward update voltages
+    P_net = p_inj.copy()
+    Q_net = q_inj.copy()
+
+    reg_ratio = _tap_to_ratio(reg_tap)
+
+    for k, (fr, to, r, x) in enumerate(branches):
+        P_flow[k] = -P_net[to]
+        Q_flow[k] = -Q_net[to]
+        P_net[fr] += P_flow[k]
+        Q_net[fr] += Q_flow[k]
+
+    for k, (fr, to, r, x) in enumerate(branches):
+        dV2 = 2.0 * (r * P_flow[k] + x * Q_flow[k])
+        V2[to] = V2[fr] - dV2
+        # Apply regulator boost on the regulated branch
+        if k == _IEEE13_REG_BRANCH:
+            V2[to] = V2[to] * (reg_ratio ** 2)
+
+    V2 = np.clip(V2, 0.5, 1.5)
+    V_pu = np.sqrt(V2)
+
+    # Total resistive losses (pu)
+    P_loss = sum(
+        branches[k][2] * (P_flow[k] ** 2 + Q_flow[k] ** 2) / max(V2[branches[k][0]], 0.01)
+        for k in range(len(branches))
+    )
+    return V_pu, float(P_loss)
+
+
+class _VVCEnvBase(gym.Env):
+    """
+    Base class for VVC environments.
+    Subclasses supply network parameters via class attributes.
+    """
+
+    metadata = {"render_modes": []}
+
+    # Override in subclasses
+    _branches: list[tuple] = []
+    _base_loads: np.ndarray = np.zeros((1, 2))
+    _cap_buses: list[int] = []
+    _cap_sizes: list[float] = []
+    _n_regs: int = 0
+    _n_bats: int = 0
+    _n_buses: int = 0
+
+    # Reward weights
+    ALPHA = 100.0   # voltage violation weight
+    BETA  = 1.0     # capacitor switching weight
+    GAMMA = 0.1     # power loss weight
+
+    def __init__(self, episode_len: int = 24, load_noise: float = 0.1, seed: int | None = None):
+        super().__init__()
+        self._ep_len = episode_len
+        self._noise = load_noise
+        self._rng = np.random.default_rng(seed)
+
+        n_caps = len(self._cap_buses)
+        n_regs = self._n_regs
+        n_bats = self._n_bats
+
+        # Action space: MultiDiscrete
+        #   caps: 0/1 each, regs: 0..32 each, bats: 0..32 each
+        disc = ([2] * n_caps) + ([_REG_TAPS] * n_regs) + ([_BAT_LEVELS] * n_bats)
+        self.action_space = spaces.MultiDiscrete(disc)
+
+        # Observation: voltages + P_loads + Q_loads + cap_status + reg_tap_norm + bat_soc
+        obs_dim = (
+            self._n_buses          # voltages
+            + self._n_buses        # P_load (normalised)
+            + self._n_buses        # Q_load (normalised)
+            + n_caps               # cap status
+            + n_regs               # reg tap normalised [0,1]
+            + n_bats               # battery SoC [0,1]
+        )
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
+        )
+
+        self._t: int = 0
+        self._cap_status = np.zeros(n_caps, dtype=np.float32)
+        self._reg_tap = np.full(n_regs, 16, dtype=np.int32)
+        self._bat_soc = np.full(n_bats, 16, dtype=np.int32)
+        self._load_scale = 1.0
+
+    # ------------------------------------------------------------------
+    def _sample_loads(self) -> tuple[np.ndarray, np.ndarray]:
+        """Return (P_pu, Q_pu) with random noise around base loads."""
+        scale = self._load_scale * (1.0 + self._rng.uniform(-self._noise, self._noise))
+        P = self._base_loads[:, 0] * scale / _BASE_KVA   # kW → pu
+        Q = self._base_loads[:, 1] * scale / _BASE_KVA
+        return P.astype(np.float32), Q.astype(np.float32)
+
+    def _apply_caps(self, Q: np.ndarray) -> np.ndarray:
+        Q = Q.copy()
+        for idx, (bus, size) in enumerate(zip(self._cap_buses, self._cap_sizes)):
+            if self._cap_status[idx] > 0.5:
+                Q[bus] -= size / _BASE_KVA   # capacitor injects Q
+        return Q
+
+    def _get_obs(self, V: np.ndarray, P: np.ndarray, Q: np.ndarray) -> np.ndarray:
+        n_caps = len(self._cap_buses)
+        reg_norm = self._reg_tap / (_REG_TAPS - 1) if self._n_regs > 0 else np.array([])
+        bat_norm = self._bat_soc / (_BAT_LEVELS - 1) if self._n_bats > 0 else np.array([])
+        return np.concatenate([
+            V,
+            P / (P.max() + 1e-8),
+            Q / (Q.max() + 1e-8),
+            self._cap_status,
+            reg_norm.astype(np.float32),
+            bat_norm.astype(np.float32),
+        ]).astype(np.float32)
+
+    def _compute_reward(
+        self,
+        V: np.ndarray,
+        P_loss: float,
+        prev_cap: np.ndarray,
+    ) -> tuple[float, int]:
+        # Voltage violation: sum of squared exceedances
+        viol_lo = np.maximum(V_MIN - V, 0.0) ** 2
+        viol_hi = np.maximum(V - V_MAX, 0.0) ** 2
+        f_vv = float(np.sum(viol_lo + viol_hi))
+        n_viol = int(np.sum((V < V_MIN) | (V > V_MAX)))
+
+        # Capacitor switching cost
+        f_cl = float(np.sum(np.abs(self._cap_status - prev_cap)))
+
+        # Power loss
+        f_pl = P_loss
+
+        reward = -(self.ALPHA * f_vv + self.BETA * f_cl + self.GAMMA * f_pl)
+        return float(reward), n_viol
+
+    def reset(
+        self,
+        *,
+        seed: int | None = None,
+        options: dict | None = None,
+    ) -> tuple[np.ndarray, dict]:
+        if seed is not None:
+            self._rng = np.random.default_rng(seed)
+        self._t = 0
+        self._load_scale = self._rng.uniform(0.9, 1.1)
+        self._cap_status = np.zeros(len(self._cap_buses), dtype=np.float32)
+        self._reg_tap = np.full(self._n_regs, 16, dtype=np.int32)
+        self._bat_soc = np.full(self._n_bats, 16, dtype=np.int32)
+
+        P, Q = self._sample_loads()
+        Q_eff = self._apply_caps(Q)
+        V, P_loss = _distflow_voltages(
+            -P, -Q_eff, self._branches, self._n_buses,
+            reg_tap=int(self._reg_tap[0]) if self._n_regs > 0 else 16,
+        )
+        obs = self._get_obs(V, P, Q)
+        return obs, {"voltage": V, "P_loss": P_loss, "v_viol": 0}
+
+    def step(self, action: np.ndarray) -> tuple[np.ndarray, float, bool, bool, dict]:
+        n_caps = len(self._cap_buses)
+        prev_cap = self._cap_status.copy()
+
+        # Decode action
+        self._cap_status = action[:n_caps].astype(np.float32)
+        if self._n_regs > 0:
+            self._reg_tap = action[n_caps: n_caps + self._n_regs].astype(np.int32)
+        if self._n_bats > 0:
+            self._bat_soc = action[n_caps + self._n_regs:].astype(np.int32)
+
+        # Advance load profile
+        self._t += 1
+        self._load_scale = self._rng.uniform(0.9, 1.1)
+        P, Q = self._sample_loads()
+        Q_eff = self._apply_caps(Q)
+
+        reg_tap = int(self._reg_tap[0]) if self._n_regs > 0 else 16
+        V, P_loss = _distflow_voltages(
+            -P, -Q_eff, self._branches, self._n_buses, reg_tap=reg_tap
+        )
+
+        reward, n_viol = self._compute_reward(V, P_loss, prev_cap)
+        obs = self._get_obs(V, P, Q)
+        terminated = self._t >= self._ep_len
+        return obs, reward, terminated, False, {"voltage": V, "P_loss": P_loss, "v_viol": n_viol}
+
+
+# ---------------------------------------------------------------------------
+# IEEE 13-bus VVC environment
+# ---------------------------------------------------------------------------
+
+class VVCEnv13Bus(_VVCEnvBase):
+    """
+    VVC environment for IEEE 13-bus distribution feeder.
+    Devices: 2 capacitor banks, 1 voltage regulator.
+    Observation dim: 13*3 + 2 + 1 = 42
+    """
+    _branches  = _IEEE13_BRANCHES
+    _base_loads = _IEEE13_BASE_LOADS
+    _cap_buses  = _IEEE13_CAP_BUSES
+    _cap_sizes  = _IEEE13_CAP_SIZES
+    _n_regs     = _IEEE13_N_REGS
+    _n_bats     = 0
+    _n_buses    = 13
+
+
+# ---------------------------------------------------------------------------
+# IEEE 123-bus VVC environment (scaled-up synthetic)
+# ---------------------------------------------------------------------------
+
+def _gen_123bus_branches(n: int = 123, seed: int = 42) -> list[tuple]:
+    """
+    Generate a random radial (tree) topology for n buses.
+    Branch impedances sampled from realistic distribution ranges.
+    """
+    rng = np.random.default_rng(seed)
+    branches = []
+    for i in range(1, n):
+        parent = rng.integers(0, i)
+        r = float(rng.uniform(0.05, 0.30))
+        x = float(rng.uniform(0.05, 0.25))
+        branches.append((int(parent), i, r, x))
+    return branches
+
+
+def _gen_123bus_loads(n: int = 123, seed: int = 42) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    P = rng.uniform(20, 200, size=n).astype(np.float32)
+    Q = (P * rng.uniform(0.4, 0.8, size=n)).astype(np.float32)
+    P[0] = 0.0
+    Q[0] = 0.0
+    return np.stack([P, Q], axis=1)
+
+
+_IEEE123_BRANCHES  = _gen_123bus_branches(123)
+_IEEE123_BASE_LOADS = _gen_123bus_loads(123)
+_IEEE123_CAP_BUSES  = [10, 20, 33, 50, 70, 90, 110]   # 7 capacitors
+_IEEE123_CAP_SIZES  = [600.0] * 7
+_IEEE123_N_REGS     = 4
+_IEEE123_N_BATS     = 0
+
+
+class VVCEnv123Bus(_VVCEnvBase):
+    """
+    VVC environment for IEEE 123-bus distribution feeder (synthetic topology).
+    Devices: 7 capacitor banks, 4 voltage regulators.
+    Observation dim: 123*3 + 7 + 4 = 380
+    """
+    _branches   = _IEEE123_BRANCHES
+    _base_loads = _IEEE123_BASE_LOADS
+    _cap_buses  = _IEEE123_CAP_BUSES
+    _cap_sizes  = _IEEE123_CAP_SIZES
+    _n_regs     = _IEEE123_N_REGS
+    _n_bats     = 0
+    _n_buses    = 123

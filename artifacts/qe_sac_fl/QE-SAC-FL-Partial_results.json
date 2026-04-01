@@ -1,0 +1,808 @@
+{
+  "condition": "QE-SAC-FL-Partial",
+  "n_rounds": 50,
+  "bytes_communicated": 224000,
+  "wall_time_seconds": 60.19124960899353,
+  "logs": [
+    {
+      "client": "Utility_A_13bus",
+      "round": 0,
+      "reward": -323.49521830441677,
+      "vviol": 7826,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004824290983378887
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 0,
+      "reward": -5240.849106477782,
+      "vviol": 107196,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00589344697073102
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 1,
+      "reward": -94.15858385997606,
+      "vviol": 14458,
+      "steps": 1000,
+      "vqc_grad_norm": 0.007437627762556076
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 1,
+      "reward": -327.21775951927305,
+      "vviol": 7829,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004661550745368004
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 2,
+      "reward": -319.3198791696014,
+      "vviol": 7829,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0044856201857328415
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 2,
+      "reward": -5337.48217237702,
+      "vviol": 107454,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00520557863637805
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 3,
+      "reward": -328.54588736568473,
+      "vviol": 7836,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004299915861338377
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 3,
+      "reward": -79.5475660902456,
+      "vviol": 14436,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0070664589293301105
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 4,
+      "reward": -81.64864165440125,
+      "vviol": 14340,
+      "steps": 1000,
+      "vqc_grad_norm": 0.006688877008855343
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 4,
+      "reward": -5276.2514814934075,
+      "vviol": 107052,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004645572043955326
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 5,
+      "reward": -70.06056398770463,
+      "vviol": 14044,
+      "steps": 1000,
+      "vqc_grad_norm": 0.006357916165143251
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 5,
+      "reward": -5326.88550240691,
+      "vviol": 107167,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004200424067676067
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 6,
+      "reward": -78.0115740425636,
+      "vviol": 14024,
+      "steps": 1000,
+      "vqc_grad_norm": 0.005999241955578327
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 6,
+      "reward": -5318.226899163844,
+      "vviol": 107338,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0038112534675747156
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 7,
+      "reward": -340.3469613388974,
+      "vviol": 7849,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004127247259020805
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 7,
+      "reward": -5380.600540411149,
+      "vviol": 107185,
+      "steps": 1000,
+      "vqc_grad_norm": 0.003473143558949232
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 8,
+      "reward": -75.12024089150553,
+      "vviol": 13812,
+      "steps": 1000,
+      "vqc_grad_norm": 0.005580578930675983
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 8,
+      "reward": -5392.621886148989,
+      "vviol": 107048,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0031736968085169792
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 9,
+      "reward": -78.14153479322897,
+      "vviol": 14181,
+      "steps": 1000,
+      "vqc_grad_norm": 0.005188134964555502
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 9,
+      "reward": -5378.138371636238,
+      "vviol": 107692,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0029181961435824633
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 10,
+      "reward": -332.76956354749785,
+      "vviol": 7824,
+      "steps": 1000,
+      "vqc_grad_norm": 0.003933463711291552
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 10,
+      "reward": -5268.59378595837,
+      "vviol": 107289,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0027258647605776787
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 11,
+      "reward": -79.9112783384862,
+      "vviol": 14824,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004819749388843775
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 11,
+      "reward": -5286.4936904879,
+      "vviol": 107092,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0025746868923306465
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 12,
+      "reward": -91.0123834169191,
+      "vviol": 14888,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0044810594990849495
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 12,
+      "reward": -5388.094587057421,
+      "vviol": 107466,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002463993150740862
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 13,
+      "reward": -335.0148116219289,
+      "vviol": 7832,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0037334784865379333
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 13,
+      "reward": -84.06676957515748,
+      "vviol": 14733,
+      "steps": 1000,
+      "vqc_grad_norm": 0.004127561114728451
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 14,
+      "reward": -5350.304303583758,
+      "vviol": 107268,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0023838761262595654
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 14,
+      "reward": -78.43717707157683,
+      "vviol": 14478,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0037421153392642736
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 15,
+      "reward": -81.46018381621418,
+      "vviol": 14407,
+      "steps": 1000,
+      "vqc_grad_norm": 0.003417723113670945
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 15,
+      "reward": -5389.577266299022,
+      "vviol": 107191,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0023436923511326313
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 16,
+      "reward": -88.51634141192264,
+      "vviol": 14453,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0030976322013884783
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 16,
+      "reward": -5240.9185379637565,
+      "vviol": 106757,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0023227136116474867
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 17,
+      "reward": -335.0624877801819,
+      "vviol": 7827,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0035254457034170628
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 17,
+      "reward": -77.57111789097112,
+      "vviol": 14276,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0027908615302294493
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 18,
+      "reward": -338.8281896671467,
+      "vviol": 7823,
+      "steps": 1000,
+      "vqc_grad_norm": 0.003341395640745759
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 18,
+      "reward": -5451.616697937122,
+      "vviol": 107319,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002306536305695772
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 19,
+      "reward": -327.6869650854652,
+      "vviol": 7841,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0031731543131172657
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 19,
+      "reward": -5253.590258683242,
+      "vviol": 106726,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0022974854800850153
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 20,
+      "reward": -76.28523722967859,
+      "vviol": 14251,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002451210981234908
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 20,
+      "reward": -5360.311587214782,
+      "vviol": 106941,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002282619010657072
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 21,
+      "reward": -87.30038050741055,
+      "vviol": 14640,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0021595072466880083
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 21,
+      "reward": -5392.170699821572,
+      "vviol": 107103,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0022624132689088583
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 22,
+      "reward": -84.76922584790593,
+      "vviol": 14428,
+      "steps": 1000,
+      "vqc_grad_norm": 0.001925565069541335
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 22,
+      "reward": -5307.917279029082,
+      "vviol": 107171,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0022255689837038517
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 23,
+      "reward": -5361.494962120196,
+      "vviol": 107536,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0021691913716495037
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 23,
+      "reward": -329.81112255429787,
+      "vviol": 7819,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0029716722201555967
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 24,
+      "reward": -323.29920169958575,
+      "vviol": 7823,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002786919241771102
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 24,
+      "reward": -5373.165988065178,
+      "vviol": 107263,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002086678287014365
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 25,
+      "reward": -343.2094265139912,
+      "vviol": 7829,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002642813604325056
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 25,
+      "reward": -5217.310019687406,
+      "vviol": 107372,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0019731142092496157
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 26,
+      "reward": -81.62157171675916,
+      "vviol": 14277,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0016670209588482976
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 26,
+      "reward": -5336.352443862403,
+      "vviol": 107148,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0018259143689647317
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 27,
+      "reward": -327.93255356545103,
+      "vviol": 7823,
+      "steps": 1000,
+      "vqc_grad_norm": 0.002459539333358407
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 27,
+      "reward": -5344.34872553771,
+      "vviol": 106901,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0016359722940251231
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 28,
+      "reward": -90.42864403688637,
+      "vviol": 14456,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00141838937997818
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 28,
+      "reward": -5288.599979134652,
+      "vviol": 107133,
+      "steps": 1000,
+      "vqc_grad_norm": 0.001417144201695919
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 29,
+      "reward": -333.09077223822044,
+      "vviol": 7827,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0023186553735285997
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 29,
+      "reward": -5409.109574342934,
+      "vviol": 107367,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0011734254658222198
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 30,
+      "reward": -327.82231518638866,
+      "vviol": 7841,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0021570581011474133
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 30,
+      "reward": -5267.601653274187,
+      "vviol": 107168,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0009201096254400909
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 31,
+      "reward": -327.92609368456266,
+      "vviol": 7830,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0020403286907821894
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 31,
+      "reward": -5248.920068637343,
+      "vviol": 107157,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0006712405011057854
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 32,
+      "reward": -331.9579631117317,
+      "vviol": 7829,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0018899664282798767
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 32,
+      "reward": -5289.258938266798,
+      "vviol": 107198,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00046461576130241156
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 33,
+      "reward": -335.95090737062236,
+      "vviol": 7823,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0017725746147334576
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 33,
+      "reward": -5424.789008843707,
+      "vviol": 107356,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00032688071951270103
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 34,
+      "reward": -339.8153858616464,
+      "vviol": 7814,
+      "steps": 1000,
+      "vqc_grad_norm": 0.001665550167672336
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 34,
+      "reward": -81.62545230489611,
+      "vviol": 13843,
+      "steps": 1000,
+      "vqc_grad_norm": 0.001185756758786738
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 35,
+      "reward": -74.70685462391295,
+      "vviol": 14981,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0010021565249189734
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 35,
+      "reward": -5352.438660873215,
+      "vviol": 107457,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00025674348580650985
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 36,
+      "reward": -339.0617821625252,
+      "vviol": 7835,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0015505445189774036
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 36,
+      "reward": -5369.1914051304975,
+      "vviol": 107256,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00021242212096694857
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 37,
+      "reward": -88.54916021054444,
+      "vviol": 14311,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0008191333618015051
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 37,
+      "reward": -5233.805264272058,
+      "vviol": 107078,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00018105536582879722
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 38,
+      "reward": -79.23631298829874,
+      "vviol": 14055,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0006824999582022429
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 38,
+      "reward": -5386.34934978813,
+      "vviol": 107317,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00015580002218484879
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 39,
+      "reward": -339.6860804175367,
+      "vviol": 7825,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0014348834520205855
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 39,
+      "reward": -5385.538103292829,
+      "vviol": 107553,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0001518902718089521
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 40,
+      "reward": -5371.454615404216,
+      "vviol": 107106,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00014744613145012408
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 40,
+      "reward": -327.84595137812096,
+      "vviol": 7835,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0013414515415206552
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 41,
+      "reward": -340.8596167760619,
+      "vviol": 7827,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0012431726790964603
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 41,
+      "reward": -5399.8331751371115,
+      "vviol": 107227,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00014471194299403578
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 42,
+      "reward": -333.42587825969076,
+      "vviol": 7827,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00115110888145864
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 42,
+      "reward": -5419.956134158065,
+      "vviol": 107632,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00014182241284288466
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 43,
+      "reward": -71.92434810550827,
+      "vviol": 14255,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0005445447750389576
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 43,
+      "reward": -5400.58570668167,
+      "vviol": 107159,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00013163199764676392
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 44,
+      "reward": -327.8159810117987,
+      "vviol": 7832,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0010564797557890415
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 44,
+      "reward": -80.84694783880572,
+      "vviol": 13837,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0004492303996812552
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 45,
+      "reward": -328.25811237935284,
+      "vviol": 7822,
+      "steps": 1000,
+      "vqc_grad_norm": 0.000976563198491931
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 45,
+      "reward": -74.87687921938314,
+      "vviol": 14417,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0003574332222342491
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 46,
+      "reward": -90.88228123726319,
+      "vviol": 14850,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00026540891849435866
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 46,
+      "reward": -331.71031557200183,
+      "vviol": 7821,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0008666554931551218
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 47,
+      "reward": -332.48874683205247,
+      "vviol": 7820,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0008006718708202243
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 47,
+      "reward": -5384.183719459916,
+      "vviol": 107151,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0001327390200458467
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 48,
+      "reward": -79.78661382188332,
+      "vviol": 14540,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00020036619389429688
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 48,
+      "reward": -5390.310789859982,
+      "vviol": 107027,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00012445179163478315
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 49,
+      "reward": -341.38875792036464,
+      "vviol": 7825,
+      "steps": 1000,
+      "vqc_grad_norm": 0.0007208999013528228
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 49,
+      "reward": -5402.905964638603,
+      "vviol": 107446,
+      "steps": 1000,
+      "vqc_grad_norm": 0.00012667817645706236
+    }
+  ]
+}
