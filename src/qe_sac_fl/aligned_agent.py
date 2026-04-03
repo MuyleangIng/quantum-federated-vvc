@@ -168,7 +168,17 @@ class AlignedQESACAgent:
         oh[int(action)] = 1.0
         return oh
 
-    def store(self, obs, action, reward, next_obs, done) -> None:
+    def store(
+        self,
+        obs,
+        action,
+        reward,
+        next_obs,
+        done,
+        v_viol: float = 0.0,
+    ) -> None:
+        # `QESACTrainer` always passes `v_viol`; aligned training does not
+        # currently use it in the replay buffer, so we accept and ignore it.
         self._buf_obs[self._ptr]  = obs
         self._buf_act[self._ptr]  = self._action_to_onehot(action)
         self._buf_rew[self._ptr]  = reward

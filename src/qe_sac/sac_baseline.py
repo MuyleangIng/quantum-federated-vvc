@@ -116,6 +116,7 @@ class ClassicalSACAgent:
         reward: float,
         next_obs: np.ndarray,
         done: bool,
+        **kwargs,
     ) -> None:
         self._buf_obs[self._ptr]  = obs
         self._buf_act[self._ptr]  = self._action_to_onehot(action)

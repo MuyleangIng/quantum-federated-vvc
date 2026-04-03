@@ -23,7 +23,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-from .autoencoder import CAE, train_cae
+from .autoencoder import CAE, train_cae, collect_random_observations
 from .vqc import VQCLayer
 from .metrics import count_parameters
 from .gnn_encoder import GNNEncoder, train_gnn_encoder
@@ -266,6 +266,37 @@ class QESACAgent:
             logs["cae_loss"] = cae_loss
 
         return logs
+
+    def pretrain_cae(
+        self,
+        env,
+        n_collect: int = 5000,
+        n_train_steps: int = 200,
+    ) -> float:
+        """
+        Offline CAE pre-training on random-policy observations (paper Section III-C).
+
+        Collect *n_collect* observations from a random policy, then train the
+        CAE encoder for *n_train_steps* gradient steps on those observations.
+        Must be called before the RL training loop begins.
+
+        Parameters
+        ----------
+        env           : Gymnasium VVC environment
+        n_collect     : number of random-policy steps to collect
+        n_train_steps : CAE gradient steps on the collected data
+
+        Returns
+        -------
+        final_loss : reconstruction loss after pre-training
+        """
+        observations = collect_random_observations(env, n_steps=n_collect)
+        return train_cae(
+            self.actor.cae,
+            observations,
+            n_steps=n_train_steps,
+            device=self.device,
+        )
 
     def param_count(self) -> int:
         """Count actor (quantum) parameters only — matches paper metric."""

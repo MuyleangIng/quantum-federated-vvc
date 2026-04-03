@@ -365,11 +365,144 @@ class VVCEnv123Bus(_VVCEnvBase):
     VVC environment for IEEE 123-bus distribution feeder (synthetic topology).
     Devices: 7 capacitor banks, 4 voltage regulators.
     Observation dim: 123*3 + 7 + 4 = 380
+    NOTE: joint action space is 2^7 * 33^4 ≈ 151M — use VVCEnv123BusPaper for training.
     """
     _branches   = _IEEE123_BRANCHES
     _base_loads = _IEEE123_BASE_LOADS
     _cap_buses  = _IEEE123_CAP_BUSES
     _cap_sizes  = _IEEE123_CAP_SIZES
     _n_regs     = _IEEE123_N_REGS
+    _n_bats     = 0
+    _n_buses    = 123
+
+
+# ---------------------------------------------------------------------------
+# IEEE 34-bus VVC environment (simplified radial feeder)
+# Topology: main trunk 0-20 + three laterals (21-25, 26-28, 29-33)
+# Devices: 2 capacitors, 1 voltage regulator
+# Observation dim: 34*3 + 2 + 1 = 105   n_actions: 2*2*33 = 132
+# ---------------------------------------------------------------------------
+
+_IEEE34_BRANCHES = [
+    # Main trunk (0 → 20)
+    (0,  1,  0.100, 0.074),
+    (1,  2,  0.181, 0.079),
+    (2,  3,  0.143, 0.061),
+    (3,  4,  0.168, 0.072),
+    (4,  5,  0.000, 0.000),   # voltage regulator (branch index 4)
+    (5,  6,  0.154, 0.066),
+    (6,  7,  0.198, 0.082),
+    (7,  8,  0.127, 0.055),
+    (8,  9,  0.163, 0.070),
+    (9,  10, 0.175, 0.076),
+    (10, 11, 0.188, 0.081),
+    (11, 12, 0.142, 0.060),
+    (12, 13, 0.156, 0.067),
+    (13, 14, 0.193, 0.083),
+    (14, 15, 0.169, 0.073),
+    (15, 16, 0.147, 0.063),
+    (16, 17, 0.184, 0.079),
+    (17, 18, 0.161, 0.069),
+    (18, 19, 0.177, 0.076),
+    (19, 20, 0.135, 0.058),
+    # Lateral A (from bus 5, buses 21-25)
+    (5,  21, 0.221, 0.091),
+    (21, 22, 0.248, 0.103),
+    (22, 23, 0.215, 0.089),
+    (23, 24, 0.267, 0.111),
+    (24, 25, 0.239, 0.099),
+    # Lateral B (from bus 10, buses 26-28)
+    (10, 26, 0.233, 0.097),
+    (26, 27, 0.251, 0.104),
+    (27, 28, 0.218, 0.090),
+    # Lateral C (from bus 16, buses 29-33)
+    (16, 29, 0.244, 0.101),
+    (29, 30, 0.262, 0.109),
+    (30, 31, 0.228, 0.094),
+    (31, 32, 0.255, 0.106),
+    (32, 33, 0.235, 0.097),
+]
+
+_IEEE34_BASE_LOADS = np.array([
+    [0,    0],     # bus 0  — substation
+    [60,   42],    # bus 1
+    [80,   56],    # bus 2
+    [50,   35],    # bus 3
+    [90,   63],    # bus 4
+    [45,   32],    # bus 5
+    [75,   53],    # bus 6
+    [110,  77],    # bus 7
+    [65,   46],    # bus 8
+    [85,   60],    # bus 9
+    [55,   39],    # bus 10
+    [100,  70],    # bus 11
+    [70,   49],    # bus 12
+    [95,   67],    # bus 13
+    [60,   42],    # bus 14
+    [80,   56],    # bus 15
+    [50,   35],    # bus 16
+    [90,   63],    # bus 17
+    [75,   53],    # bus 18
+    [65,   46],    # bus 19
+    [55,   39],    # bus 20
+    [40,   28],    # bus 21  lateral A
+    [50,   35],    # bus 22
+    [35,   25],    # bus 23
+    [45,   32],    # bus 24
+    [30,   21],    # bus 25
+    [60,   42],    # bus 26  lateral B
+    [50,   35],    # bus 27
+    [40,   28],    # bus 28
+    [55,   39],    # bus 29  lateral C
+    [45,   32],    # bus 30
+    [35,   25],    # bus 31
+    [60,   42],    # bus 32
+    [40,   28],    # bus 33
+], dtype=np.float32)
+
+_IEEE34_CAP_BUSES = [8, 25]          # 2 capacitor banks
+_IEEE34_CAP_SIZES = [450.0, 300.0]   # kVAR
+_IEEE34_REG_BRANCH = 4               # regulator on branch 4 (bus 4→5)
+_IEEE34_N_REGS = 1
+
+
+class VVCEnv34Bus(_VVCEnvBase):
+    """
+    VVC environment for IEEE 34-bus distribution feeder (simplified radial).
+    Devices: 2 capacitor banks, 1 voltage regulator.
+    Observation dim: 34*3 + 2 + 1 = 105   n_actions: 2*2*33 = 132
+    """
+    _branches   = _IEEE34_BRANCHES
+    _base_loads = _IEEE34_BASE_LOADS
+    _cap_buses  = _IEEE34_CAP_BUSES
+    _cap_sizes  = _IEEE34_CAP_SIZES
+    _n_regs     = _IEEE34_N_REGS
+    _n_bats     = 0
+    _n_buses    = 34
+
+
+# ---------------------------------------------------------------------------
+# IEEE 123-bus — paper-scale config (4 caps + 1 reg, feasible action space)
+# Devices: 4 capacitors, 1 voltage regulator
+# Observation dim: 123*3 + 4 + 1 = 374   n_actions: 2^4 * 33 = 528
+# ---------------------------------------------------------------------------
+
+_IEEE123P_CAP_BUSES = [10, 33, 70, 110]    # 4 capacitors
+_IEEE123P_CAP_SIZES = [600.0] * 4
+_IEEE123P_N_REGS    = 1
+
+
+class VVCEnv123BusPaper(_VVCEnvBase):
+    """
+    IEEE 123-bus VVC environment scaled for tractable training.
+    Devices: 4 capacitors, 1 voltage regulator.
+    Observation dim: 123*3 + 4 + 1 = 374   n_actions: 2^4*33 = 528
+    Uses same synthetic topology as VVCEnv123Bus.
+    """
+    _branches   = _IEEE123_BRANCHES
+    _base_loads = _IEEE123_BASE_LOADS
+    _cap_buses  = _IEEE123P_CAP_BUSES
+    _cap_sizes  = _IEEE123P_CAP_SIZES
+    _n_regs     = _IEEE123P_N_REGS
     _n_bats     = 0
     _n_buses    = 123

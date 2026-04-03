@@ -10,7 +10,7 @@ from src.qe_sac.trainer import QESACTrainer, compare_agents
 
 env = VVCEnv13Bus()
 agent = QESACAgent(obs_dim=env.observation_space.shape[0],
-                   n_actions=env.action_space.nvec.sum())
+                   n_actions=int(env.action_space.nvec.prod()))
 trainer = QESACTrainer(agent, env)
 metrics = trainer.train(n_steps=10_000)
 """

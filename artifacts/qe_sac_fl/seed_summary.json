@@ -1,0 +1,84 @@
+{
+  "runs": {
+    "seed_0": {
+      "final_rewards": {
+        "Utility_A_13bus": -330.7433823155637,
+        "Utility_B_34bus": -77.65147181606082,
+        "Utility_C_123bus": -5301.293629617202
+      },
+      "bytes_communicated": 336000,
+      "wall_time_seconds": 75.56138324737549
+    },
+    "seed_1": {
+      "final_rewards": {
+        "Utility_A_13bus": -321.1230381474389,
+        "Utility_B_34bus": -77.09935147014156,
+        "Utility_C_123bus": -5424.954367890997
+      },
+      "bytes_communicated": 336000,
+      "wall_time_seconds": 75.10967898368835
+    },
+    "seed_2": {
+      "final_rewards": {
+        "Utility_A_13bus": -331.8067730523637,
+        "Utility_B_34bus": -75.54437007990944,
+        "Utility_C_123bus": -5327.261541768696
+      },
+      "bytes_communicated": 336000,
+      "wall_time_seconds": 75.42291355133057
+    },
+    "seed_3": {
+      "final_rewards": {
+        "Utility_A_13bus": -331.9543209751042,
+        "Utility_B_34bus": -78.6609957036094,
+        "Utility_C_123bus": -5353.204534538583
+      },
+      "bytes_communicated": 336000,
+      "wall_time_seconds": 74.9420256614685
+    },
+    "seed_4": {
+      "final_rewards": {
+        "Utility_A_13bus": -332.7108613624541,
+        "Utility_B_34bus": -80.01711334532175,
+        "Utility_C_123bus": -5305.734514968704
+      },
+      "bytes_communicated": 336000,
+      "wall_time_seconds": 74.94130492210388
+    }
+  },
+  "summary": {
+    "Utility_A_13bus": {
+      "mean_reward": -329.6676751705849,
+      "std_reward": 4.318181068473534,
+      "seed_rewards": [
+        -330.7433823155637,
+        -321.1230381474389,
+        -331.8067730523637,
+        -331.9543209751042,
+        -332.7108613624541
+      ]
+    },
+    "Utility_B_34bus": {
+      "mean_reward": -77.7946604830086,
+      "std_reward": 1.5005064448814565,
+      "seed_rewards": [
+        -77.65147181606082,
+        -77.09935147014156,
+        -75.54437007990944,
+        -78.6609957036094,
+        -80.01711334532175
+      ]
+    },
+    "Utility_C_123bus": {
+      "mean_reward": -5342.489717756836,
+      "std_reward": 45.15569902979445,
+      "seed_rewards": [
+        -5301.293629617202,
+        -5424.954367890997,
+        -5327.261541768696,
+        -5353.204534538583,
+        -5305.734514968704
+      ]
+    }
+  }
+}

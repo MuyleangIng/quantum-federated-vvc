@@ -181,8 +181,9 @@ class VQCLayer(nn.Module):
     """
     PyTorch nn.Module wrapping the VQC.
 
-    Uses a pure-PyTorch statevector simulator (fast, GPU-compatible, fully
-    batched).  Falls back to PennyLane default.mixed only when noise_lambda > 0.
+    Fast path  : PennyLane lightning.gpu (GPU-accelerated statevector, adjoint diff).
+    Fallback   : PennyLane lightning.qubit (CPU C++, if GPU unavailable).
+    Noisy path : PennyLane default.mixed  (depolarising noise, parameter-shift).
 
     Parameters
     ----------
@@ -198,13 +199,42 @@ class VQCLayer(nn.Module):
             torch.randn(N_LAYERS, N_QUBITS) * 0.1
         )
 
-        # PennyLane noisy circuit — built lazily, only used when noise_lambda > 0
-        self._pl_circuit = None
+        # PennyLane circuits — built lazily on first forward call
+        self._pl_circuit       = None   # noiseless: lightning.gpu / lightning.qubit
+        self._pl_noisy_circuit = None   # noisy: default.mixed
 
     def _get_pl_circuit(self):
-        """Build PennyLane noisy circuit (lazy)."""
+        """Build noiseless PennyLane circuit on lightning.gpu (falls back to lightning.qubit)."""
         if self._pl_circuit is not None:
             return self._pl_circuit
+
+        try:
+            dev = qml.device("lightning.gpu", wires=N_QUBITS)
+            diff_method = "adjoint"
+        except Exception:
+            dev = qml.device("lightning.qubit", wires=N_QUBITS)
+            diff_method = "adjoint"
+
+        @qml.qnode(dev, diff_method=diff_method, interface="torch")
+        def circuit(inputs, weights):
+            # State preparation: RY angle encoding
+            for i in range(N_QUBITS):
+                qml.RY(inputs[i], wires=i)
+            # Variational layers: CNOT entanglement + RX rotations
+            for layer in range(N_LAYERS):
+                for i in range(N_QUBITS - 1):
+                    qml.CNOT(wires=[i, i + 1])
+                for i in range(N_QUBITS):
+                    qml.RX(weights[layer, i], wires=i)
+            return [qml.expval(qml.PauliZ(i)) for i in range(N_QUBITS)]
+
+        self._pl_circuit = circuit
+        return circuit
+
+    def _get_pl_noisy_circuit(self):
+        """Build noisy PennyLane circuit on default.mixed (parameter-shift)."""
+        if self._pl_noisy_circuit is not None:
+            return self._pl_noisy_circuit
         dev = qml.device("default.mixed", wires=N_QUBITS)
         lam = self._noise
 
@@ -223,7 +253,7 @@ class VQCLayer(nn.Module):
                     qml.DepolarizingChannel(lam, wires=i)
             return [qml.expval(qml.PauliZ(i)) for i in range(N_QUBITS)]
 
-        self._pl_circuit = circuit
+        self._pl_noisy_circuit = circuit
         return circuit
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
@@ -237,8 +267,8 @@ class VQCLayer(nn.Module):
         out : shape (..., N_QUBITS) — PauliZ expectations in [−1, 1]
         """
         if self._noise > 0.0:
-            # Noisy path: PennyLane sequential (noise robustness test only)
-            circuit = self._get_pl_circuit()
+            # Noisy path: default.mixed + parameter-shift (sequential per sample)
+            circuit = self._get_pl_noisy_circuit()
             if inputs.dim() == 1:
                 return torch.stack(circuit(inputs, self.weights)).float()
             return torch.stack([
@@ -246,10 +276,14 @@ class VQCLayer(nn.Module):
                 for x in inputs
             ]).float()
 
-        # Fast path: pure-PyTorch statevector simulator
+        # Fast path: lightning.gpu (adjoint diff, GPU-accelerated statevector)
+        circuit = self._get_pl_circuit()
         if inputs.dim() == 1:
-            return _vqc_forward(inputs.unsqueeze(0), self.weights).squeeze(0)
-        return _vqc_forward(inputs, self.weights)
+            return torch.stack(circuit(inputs, self.weights)).float()
+        return torch.stack([
+            torch.stack(circuit(x, self.weights))
+            for x in inputs
+        ]).float()
 
     @property
     def n_params(self) -> int:

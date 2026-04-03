@@ -71,6 +71,36 @@ class CAE(nn.Module):
         return x_hat, z
 
 
+def collect_random_observations(env, n_steps: int = 5000) -> np.ndarray:
+    """
+    Collect observations from a random policy (paper Section III-C).
+
+    Run the environment for *n_steps* steps using a purely random policy
+    and return the collected observations as an array.  Used to pre-train
+    the CAE offline before RL training begins.
+
+    Parameters
+    ----------
+    env     : Gymnasium VVC environment (reset() / step() interface)
+    n_steps : number of random environment steps to collect
+
+    Returns
+    -------
+    observations : np.ndarray of shape (n_steps, obs_dim)
+    """
+    obs_list = []
+    obs, _ = env.reset()
+    for _ in range(n_steps):
+        obs_list.append(obs)
+        action = env.action_space.sample()
+        next_obs, _, terminated, truncated, _ = env.step(action)
+        if terminated or truncated:
+            obs, _ = env.reset()
+        else:
+            obs = next_obs
+    return np.array(obs_list, dtype=np.float32)
+
+
 def train_cae(
     cae: CAE,
     observations: np.ndarray | torch.Tensor,
