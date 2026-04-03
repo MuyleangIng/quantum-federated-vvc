@@ -33,29 +33,30 @@ class CAE(nn.Module):
 
     def __init__(
         self,
-        input_dim:   int,
-        hidden_dims: tuple[int, int] = (64, 32),
-        latent_dim:  int = 8,
+        input_dim:  int,
+        hidden_dim: int = 64,
+        latent_dim: int = 8,
+        # legacy two-tuple argument kept for backward compat
+        hidden_dims: tuple | None = None,
     ):
         super().__init__()
-        h1, h2 = hidden_dims
+        if hidden_dims is not None:
+            hidden_dim = hidden_dims[0]   # use first element only
         self._latent_dim = latent_dim
 
+        # Single hidden layer: obs → 64 → 8  (matches paper architecture)
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, h1),
+            nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(h1, h2),
-            nn.ReLU(),
-            nn.Linear(h2, latent_dim),
-            nn.Tanh(),  # output in (-1, 1); scaled to (-π, π) in encode()
+            nn.Linear(hidden_dim, latent_dim),
+            nn.Tanh(),   # output in (-1, 1); scaled to (-π, π) in encode()
         )
 
+        # Decoder: 8 → 64 → obs  (used only for reconstruction loss, not inference)
         self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, h2),
+            nn.Linear(latent_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(h2, h1),
-            nn.ReLU(),
-            nn.Linear(h1, input_dim),
+            nn.Linear(hidden_dim, input_dim),
         )
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:

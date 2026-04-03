@@ -3,15 +3,25 @@ VVCEnv34BusOpenDSS — IEEE 34-bus Volt-VAR Control using the real PowerGym DSS 
 
 Circuit : ieee34Mod1.dss  (Siemens PowerGym dataset, IEEE 34 Node Test Feeder Mod 1)
 Devices : 2 capacitors  (C844 @ bus 844, C848 @ bus 848)
-          1 voltage regulator set (reg1a/reg1b/reg1c — 3 single-phase transformers
-          at bus 814, all set to the same tap by the RL agent)
+          6 voltage regulators (reg1a/b/c @ bus 814, reg2a/b/c @ bus 852 — all independent)
+          2 batteries (batt1 @ bus 890 500 kW/4000 kWh, batt2 @ bus 832 500 kW/4000 kWh)
 
-Action  — MultiDiscrete([2, 2, 33]):
-    action[0]  C844 ON/OFF
-    action[1]  C848 ON/OFF
-    action[2]  reg1 tap 0–32  (applied to reg1a, reg1b, reg1c simultaneously)
+Action  — MultiDiscrete([2, 2, 33, 33, 33, 33, 33, 33, 33, 33]):
+    action[0]   C844   ON/OFF
+    action[1]   C848   ON/OFF
+    action[2]   reg1a  tap 0–32
+    action[3]   reg1b  tap 0–32
+    action[4]   reg1c  tap 0–32
+    action[5]   reg2a  tap 0–32
+    action[6]   reg2b  tap 0–32
+    action[7]   reg2c  tap 0–32
+    action[8]   batt1  discharge level 0–32
+    action[9]   batt2  discharge level 0–32
 
-Reward : −α·Σ(V−Vlim)² − β·Σ|cap_changes| − γ·P_loss_kW
+Observation: voltages | cap_statuses | reg_tap_indices (×6) | [soc, dis_ratio] per bat (×2)
+Obs dim = _n_volt_phases + 2 + 6 + 4 = 107
+
+Reward: PowerGym weights — power_w=1, cap_w=1/33, reg_w=1/33, dis_w=10/33
 """
 
 from __future__ import annotations
@@ -21,35 +31,43 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 import opendssdirect as dss
+from .load_profile import LoadProfileSampler
 
 # ── DSS file ─────────────────────────────────────────────────────────────────
 _HERE     = os.path.dirname(os.path.abspath(__file__))
 _DSS_FILE = os.path.join(_HERE, "powergym_systems", "34Bus", "ieee34Mod1.dss")
 
-_CAP_NAMES  = ["C844", "C848"]
+_CAP_NAMES = ["C844", "C848"]
+_N_CAPS    = len(_CAP_NAMES)
 
-# reg1 is 3 single-phase transformers (a/b/c) — all set to same tap
-_REG1_NAMES = ["reg1a", "reg1b", "reg1c"]
-# reg2 is fixed at nominal (not RL-controlled in this action space)
-_REG2_NAMES = ["reg2a", "reg2b", "reg2c"]
-_REG_FIXED  = _REG2_NAMES
-
-# All regcontrol names to disable
+# All 6 single-phase regulators controlled independently
+_REG_NAMES     = ["reg1a", "reg1b", "reg1c", "reg2a", "reg2b", "reg2c"]
+_N_REGS        = len(_REG_NAMES)
 _REGCTRL_NAMES = ["creg1a", "creg1b", "creg1c", "creg2a", "creg2b", "creg2c"]
 
+# Batteries: 2 batteries
+_BAT_NAMES   = ["batt1", "batt2"]
+_BAT_MAX_KW  = [500.0, 500.0]
+_BAT_MAX_KWH = [4000.0, 4000.0]
+_N_BATS      = len(_BAT_NAMES)
+_BAT_ACT_NUM  = 33
+_BAT_MODE_NUM = _BAT_ACT_NUM // 2   # 16
+
 _V_MIN, _V_MAX = 0.95, 1.05
-_ALPHA = 100.0
-_BETA  = 1.0
-_GAMMA = 0.1
+# PowerGym reward weights for 34-bus
+_POWER_W = 1.0
+_CAP_W   = 1.0 / 33.0
+_REG_W   = 1.0 / 33.0
+_DIS_W   = 10.0 / 33.0
+
 _TAP_MIN, _TAP_MAX, _N_TAPS = 0.90, 1.10, 33
+_DURATION_H = 1.0
 
 
 def _build_circuit() -> None:
     dss.Text.Command(f"compile [{_DSS_FILE}]")
     for name in _REGCTRL_NAMES:
         dss.Text.Command(f"regcontrol.{name}.enabled=no")
-    for name in _REG_FIXED:
-        dss.Text.Command(f"edit transformer.{name} wdg=2 tap=1.0")
     dss.Text.Command("solve")
 
 
@@ -64,12 +82,34 @@ def _get_load_bases() -> dict[str, tuple[float, float]]:
     return bases
 
 
+def _bat_avail_kw(max_kw: float) -> list[float]:
+    diff = max_kw / _BAT_MODE_NUM
+    return [n * diff for n in range(-_BAT_MODE_NUM, _BAT_MODE_NUM + 1)]
+
+
+def _bat_state_project(
+    state: int, avail_kw: list[float], kwh: float, max_kwh: float
+) -> tuple[float, int]:
+    mid  = len(avail_kw) // 2
+    state = max(0, min(len(avail_kw) - 1, state))
+    diff  = avail_kw[1] - avail_kw[0]
+    if state > mid:
+        allowed = kwh / _DURATION_H
+        if avail_kw[state] > allowed:
+            state = int(state - np.ceil((avail_kw[state] - allowed) / diff - 1e-8))
+    elif state < mid:
+        allowed = (kwh - max_kwh) / _DURATION_H
+        if avail_kw[state] < allowed:
+            state = int(state + np.ceil((allowed - avail_kw[state]) / diff - 1e-8))
+    return avail_kw[state], state
+
+
 class VVCEnv34BusOpenDSS(gym.Env):
     """
     IEEE 34-bus Volt-VAR Control — real PowerGym DSS circuit, OpenDSS power flow.
 
-    Action  : MultiDiscrete([2, 2, 33])  →  132 joint actions
-    Obs dim : determined at runtime from the compiled circuit
+    Action  : MultiDiscrete([2,2, 33×6, 33×2])
+    Obs dim : _n_volt_phases + 2 + 6 + 4  →  107
     """
 
     metadata = {"render_modes": []}
@@ -85,81 +125,103 @@ class VVCEnv34BusOpenDSS(gym.Env):
         self.load_noise  = load_noise
         self._rng        = np.random.default_rng(seed)
         self._step_count = 0
-        self._cap_status = np.array([0, 0], dtype=np.int32)
-        self._tap_idx    = 16
+        self._cap_status = np.zeros(_N_CAPS, dtype=np.int32)
+        self._tap_idx    = np.full(_N_REGS, 16, dtype=np.int32)
+        self._profile    = np.ones(episode_len, dtype=np.float32)
+
+        self._bat_kwh   = np.array(_BAT_MAX_KWH, dtype=np.float64)
+        self._bat_state = np.full(_N_BATS, _BAT_MODE_NUM, dtype=np.int32)
+        self._bat_avail = [_bat_avail_kw(mkw) for mkw in _BAT_MAX_KW]
 
         _build_circuit()
         self._n_volt_phases = len(dss.Circuit.AllBusMagPu())
         self._load_bases    = _get_load_bases()
+        self._load_sampler  = LoadProfileSampler("34Bus")
 
-        obs_dim = self._n_volt_phases * 2 + 3
+        obs_dim = self._n_volt_phases + _N_CAPS + _N_REGS + _N_BATS * 2
 
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf,
             shape=(obs_dim,), dtype=np.float32,
         )
-        self.action_space = spaces.MultiDiscrete([2, 2, _N_TAPS])
+        self.action_space = spaces.MultiDiscrete(
+            [2] * _N_CAPS + [_N_TAPS] * _N_REGS + [_BAT_ACT_NUM] * _N_BATS
+        )
 
-    def _apply_action(self, action: np.ndarray) -> int:
-        new_caps = action[:2].astype(np.int32)
-        new_tap  = int(action[2])
-        switches = int(np.sum(np.abs(new_caps - self._cap_status)))
+    def _apply_action(self, action: np.ndarray) -> tuple[int, int, float]:
+        new_caps     = action[:_N_CAPS].astype(np.int32)
+        new_taps     = action[_N_CAPS:_N_CAPS + _N_REGS].astype(np.int32)
+        new_bat_acts = action[_N_CAPS + _N_REGS:].astype(np.int32)
+
+        cap_switches = int(np.sum(np.abs(new_caps - self._cap_status)))
+        reg_switches = int(np.sum(np.abs(new_taps - self._tap_idx)))
 
         for name, val in zip(_CAP_NAMES, new_caps):
             dss.Text.Command(f"capacitor.{name}.enabled={'yes' if val else 'no'}")
 
-        tap_ratio = _TAP_MIN + new_tap * (_TAP_MAX - _TAP_MIN) / (_N_TAPS - 1)
-        for name in _REG1_NAMES:
+        for name, tap in zip(_REG_NAMES, new_taps):
+            tap_ratio = _TAP_MIN + tap * (_TAP_MAX - _TAP_MIN) / (_N_TAPS - 1)
             dss.Text.Command(f"edit transformer.{name} wdg=2 tap={tap_ratio:.6f}")
 
-        self._cap_status = new_caps
-        self._tap_idx    = new_tap
-        return switches
+        total_dis_ratio = 0.0
+        for i, (bat_name, avail_kw, max_kw, max_kwh) in enumerate(
+            zip(_BAT_NAMES, self._bat_avail, _BAT_MAX_KW, _BAT_MAX_KWH)
+        ):
+            kw, clipped_state = _bat_state_project(
+                int(new_bat_acts[i]), avail_kw, float(self._bat_kwh[i]), max_kwh
+            )
+            self._bat_state[i] = clipped_state
+            dss.Text.Command(f"edit generator.{bat_name} kw={kw:.3f} kvar={kw / 0.95:.3f}")
+            total_dis_ratio += max(0.0, kw) / max_kw
 
-    def _randomise_loads(self) -> None:
+        self._cap_status = new_caps
+        self._tap_idx    = new_taps
+        return cap_switches, reg_switches, total_dis_ratio
+
+    def _update_bat_soc(self) -> None:
+        for i in range(_N_BATS):
+            kw_set = self._bat_avail[i][self._bat_state[i]]
+            self._bat_kwh[i] -= kw_set * _DURATION_H
+            self._bat_kwh[i]  = float(np.clip(self._bat_kwh[i], 0.0, _BAT_MAX_KWH[i]))
+
+    def _apply_loads(self, multiplier: float) -> None:
         for name, (kw_base, kvar_base) in self._load_bases.items():
-            scale = 1.0 + self._rng.uniform(-self.load_noise, self.load_noise)
             dss.Text.Command(
-                f"edit load.{name} kw={kw_base * scale:.3f} kvar={kvar_base * scale:.3f}"
+                f"edit load.{name} kw={kw_base * multiplier:.3f} kvar={kvar_base * multiplier:.3f}"
             )
 
     def _get_voltages(self) -> np.ndarray:
         return np.array(dss.Circuit.AllBusMagPu(), dtype=np.float32)
 
-    def _get_loads_norm(self) -> np.ndarray:
-        total_max = sum(kw for kw, _ in self._load_bases.values()) * (1 + self.load_noise)
-        loads = []
-        if dss.Loads.First():
-            while True:
-                loads.extend([dss.Loads.kW() / total_max] * dss.Loads.Phases())
-                if not dss.Loads.Next():
-                    break
-        out = np.zeros(self._n_volt_phases, dtype=np.float32)
-        n = min(len(loads), len(out))
-        out[:n] = loads[:n]
-        return out
-
     def _get_obs(self) -> np.ndarray:
         v    = self._get_voltages()
-        p    = self._get_loads_norm()
         caps = self._cap_status.astype(np.float32)
-        tap  = np.array([self._tap_idx / (_N_TAPS - 1)], dtype=np.float32)
-        return np.concatenate([v, p, caps, tap])
+        taps = self._tap_idx.astype(np.float32)
+        bat_obs = []
+        for i in range(_N_BATS):
+            soc       = float(self._bat_kwh[i]) / _BAT_MAX_KWH[i]
+            dis_ratio = max(0.0, self._bat_avail[i][self._bat_state[i]]) / _BAT_MAX_KW[i]
+            bat_obs.extend([soc, dis_ratio])
+        return np.concatenate([v, caps, taps, np.array(bat_obs, dtype=np.float32)])
 
-    def _compute_reward(self, switches: int) -> tuple[float, int, float]:
-        vmag     = self._get_voltages()
-        vviol_sq = np.sum(
-            np.maximum(vmag - _V_MAX, 0) ** 2 +
-            np.maximum(_V_MIN - vmag, 0) ** 2
-        )
-        n_vviol  = int(np.sum((vmag < _V_MIN) | (vmag > _V_MAX)))
-        p_loss   = dss.Circuit.Losses()[0] / 1000.0
-        reward   = (
-            - _ALPHA * float(vviol_sq)
-            - _BETA  * float(switches)
-            - _GAMMA * float(p_loss)
-        )
-        return reward, n_vviol, p_loss
+    def _compute_reward(
+        self, cap_switches: int, reg_switches: int, dis_ratio: float
+    ) -> tuple[float, int, float]:
+        vmag    = self._get_voltages()
+        n_vviol = int(np.sum((vmag < _V_MIN) | (vmag > _V_MAX)))
+
+        v_reward = float(np.sum(
+            np.minimum(0.0, _V_MAX - vmag) + np.minimum(0.0, vmag - _V_MIN)
+        ))
+
+        loss_kw = dss.Circuit.Losses()[0] / 1000.0
+        gen_kw  = abs(dss.Circuit.TotalPower()[0])
+        p_reward = -(loss_kw / gen_kw) * _POWER_W if gen_kw > 0 else 0.0
+
+        t_reward = -_CAP_W * cap_switches - _REG_W * reg_switches - _DIS_W * dis_ratio
+
+        reward = p_reward + v_reward + t_reward
+        return reward, n_vviol, loss_kw
 
     def reset(
         self,
@@ -170,23 +232,27 @@ class VVCEnv34BusOpenDSS(gym.Env):
             self._rng = np.random.default_rng(seed)
         _build_circuit()
         self._step_count = 0
-        self._cap_status = np.array([0, 0], dtype=np.int32)
-        self._tap_idx    = 16
-        self._randomise_loads()
+        self._cap_status = np.zeros(_N_CAPS, dtype=np.int32)
+        self._tap_idx    = np.full(_N_REGS, 16, dtype=np.int32)
+        self._bat_kwh    = np.array(_BAT_MAX_KWH, dtype=np.float64)
+        self._bat_state  = np.full(_N_BATS, _BAT_MODE_NUM, dtype=np.int32)
+        self._profile    = self._load_sampler.sample(self._rng)
+        self._apply_loads(self._profile[0])
         dss.Text.Command("solve")
         return self._get_obs(), {}
 
     def step(
         self, action: np.ndarray
     ) -> tuple[np.ndarray, float, bool, bool, dict]:
-        switches = self._apply_action(action)
-        self._randomise_loads()
+        cap_sw, reg_sw, dis_ratio = self._apply_action(action)
+        self._apply_loads(self._profile[self._step_count])
         dss.Text.Command("solve")
+        self._update_bat_soc()
 
-        obs               = self._get_obs()
-        reward, n_vviol, p_loss = self._compute_reward(switches)
-        self._step_count += 1
-        done              = self._step_count >= self.episode_len
+        obs                     = self._get_obs()
+        reward, n_vviol, p_loss = self._compute_reward(cap_sw, reg_sw, dis_ratio)
+        self._step_count       += 1
+        done                    = self._step_count >= self.episode_len
 
         return obs, reward, done, False, {
             "v_viol": n_vviol,

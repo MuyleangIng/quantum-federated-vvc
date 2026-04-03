@@ -276,14 +276,12 @@ class VQCLayer(nn.Module):
                 for x in inputs
             ]).float()
 
-        # Fast path: lightning.gpu (adjoint diff, GPU-accelerated statevector)
-        circuit = self._get_pl_circuit()
+        # Fast path: batched pure-PyTorch statevector (mathematically identical to
+        # lightning.gpu but processes the entire batch in one tensor operation).
+        # PennyLane lightning.gpu circuit (_get_pl_circuit) is kept for noise eval.
         if inputs.dim() == 1:
-            return torch.stack(circuit(inputs, self.weights)).float()
-        return torch.stack([
-            torch.stack(circuit(x, self.weights))
-            for x in inputs
-        ]).float()
+            return _vqc_forward(inputs.unsqueeze(0), self.weights).squeeze(0)
+        return _vqc_forward(inputs, self.weights)
 
     @property
     def n_params(self) -> int:
