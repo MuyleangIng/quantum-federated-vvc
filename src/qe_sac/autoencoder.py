@@ -5,8 +5,8 @@ Compresses the high-dimensional grid state s → 8-dim latent s'.
 The encoder output is scaled to [-π, π] for VQC angle encoding.
 
 Architecture:
-    Encoder: input_dim → 64 → 32 → 8  (tanh → scaled to [-π, π])
-    Decoder: 8 → 32 → 64 → input_dim  (for reconstruction loss)
+    Encoder: input_dim → 64 → 8  (tanh → scaled to [-π, π])
+    Decoder: 8 → 64 → input_dim  (for reconstruction loss)
 
 Co-adaptive retraining: called every C=500 gradient steps during RL training,
 training on a recent batch from the replay buffer so the latent space stays
@@ -41,10 +41,12 @@ class CAE(nn.Module):
     ):
         super().__init__()
         if hidden_dims is not None:
-            hidden_dim = hidden_dims[0]   # use first element only
+            hidden_dim = hidden_dims[0]
         self._latent_dim = latent_dim
 
-        # Single hidden layer: obs → 64 → 8  (matches paper architecture)
+        # Encoder: input → hidden_dim → latent_dim
+        # Paper specifies FC layers with latent_dim=8; hidden_dim=64 is an
+        # implementation choice consistent with the paper's parameter count.
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
@@ -52,7 +54,7 @@ class CAE(nn.Module):
             nn.Tanh(),   # output in (-1, 1); scaled to (-π, π) in encode()
         )
 
-        # Decoder: 8 → 64 → obs  (used only for reconstruction loss, not inference)
+        # Decoder mirrors encoder
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
             nn.ReLU(),
@@ -109,23 +111,29 @@ def train_cae(
     lr: float = 1e-3,
     batch_size: int = 64,
     device: str = "cpu",
-    latent_dim: int = 8,   # unused here; kept for ablation script compatibility
+    latent_dim: int = 8,       # unused; kept for ablation script compatibility
+    optimizer: optim.Optimizer | None = None,  # pass persistent optimizer if available
 ) -> float:
     """
     Train the CAE for *n_steps* gradient steps on *observations*.
 
+    Pass a persistent *optimizer* (owned by the agent) to avoid recreating
+    Adam on every co-adaptive retraining call.  If None, a fresh Adam is
+    created (used for stand-alone / offline pretraining calls).
+
     Parameters
     ----------
     cae          : CAE model (updated in-place)
-    observations : array of shape (N, obs_dim) — recent replay buffer samples
+    observations : array of shape (N, obs_dim)
     n_steps      : number of gradient steps
-    lr           : learning rate
+    lr           : learning rate (ignored when optimizer is provided)
     batch_size   : mini-batch size
     device       : torch device string
+    optimizer    : persistent optimizer; if None a temporary Adam is created
 
     Returns
     -------
-    final_loss : float — mean reconstruction loss of the last batch
+    final_loss : float — reconstruction loss of the last batch
     """
     cae.to(device)
     cae.train()
@@ -134,19 +142,19 @@ def train_cae(
         observations = torch.tensor(observations, dtype=torch.float32)
     observations = observations.to(device)
 
-    optimizer = optim.Adam(cae.parameters(), lr=lr)
+    _opt    = optimizer if optimizer is not None else optim.Adam(cae.parameters(), lr=lr)
     loss_fn = nn.MSELoss()
-    N = len(observations)
+    N       = len(observations)
     final_loss = 0.0
 
     for _ in range(n_steps):
-        idx = torch.randint(0, N, (min(batch_size, N),))
+        idx   = torch.randint(0, N, (min(batch_size, N),))
         batch = observations[idx]
         x_hat, _ = cae(batch)
         loss = loss_fn(x_hat, batch)
-        optimizer.zero_grad()
+        _opt.zero_grad()
         loss.backward()
-        optimizer.step()
+        _opt.step()
         final_loss = loss.item()
 
     return final_loss

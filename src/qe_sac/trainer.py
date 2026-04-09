@@ -43,6 +43,7 @@ class QESACTrainer:
         log_interval:        int = 50,
         save_dir:            str = "artifacts/qe_sac",
         device:              str = "cpu",
+        agent_name:          str = "Agent",
     ):
         self.agent        = agent
         self.env          = env
@@ -52,6 +53,7 @@ class QESACTrainer:
         self.log_interval = log_interval
         self.save_dir     = save_dir
         self.device       = device
+        self.agent_name   = agent_name
         os.makedirs(save_dir, exist_ok=True)
 
     def train(self, n_steps: int = 50_000) -> TrainingMetrics:
@@ -101,7 +103,7 @@ class QESACTrainer:
 
                 if ep_idx % self.log_interval == 0:
                     print(
-                        f"  ep {ep_idx:4d} | steps {total_steps:6d} | "
+                        f"[{self.agent_name}] ep {ep_idx:4d} | steps {total_steps:6d} | "
                         f"reward {ep_reward:8.3f} | vviol {ep_vviol:3d} | "
                         f"mean100 {metrics.mean_reward(100):8.3f}"
                     )

@@ -1,7 +1,25 @@
 """
-Run QE-SAC and Classical SAC on VVCEnvOpenDSS (real 3-phase AC, 93-dim obs).
-Saves results to artifacts/qe_sac/opendss_results_13bus.json for direct
-comparison with paper (which also uses OpenDSS).
+Run all 4 paper agents on VVCEnvOpenDSS (real 3-phase AC, 48-dim obs).
+
+Agents compared (matches Lin et al. 2025 Table 4):
+    QE-SAC       — CAE + VQC + factorized heads  (proposed)
+    Classical-SAC — MLP(256→256) + factorized heads
+    SAC-AE        — CAE + tiny MLP + factorized heads  (no VQC ablation)
+    QC-SAC        — fixed PCA + VQC + factorized heads (no co-adapt ablation)
+
+Environment: VVCEnvOpenDSS — real OpenDSS 3-phase AC (IEEE 13-bus)
+             obs_dim=48, action=MultiDiscrete([2,2,33,33,33,33])
+
+Paper hyperparameters (Lin et al. 2025, Table 3):
+    lr            = 1e-4
+    gamma         = 0.99
+    tau           = 0.005
+    alpha         = 0.2  (fixed entropy coefficient)
+    batch_size    = 256
+    buffer_size   = 1,000,000
+    CAE interval  = 500  (C in Algorithm 1)
+    CAE pre-train = 5,000 random steps + 200 gradient steps
+    warmup        = 1,000 random steps before learning
 
 Usage:
     python scripts/run_opendss_comparison.py
@@ -17,131 +35,159 @@ import numpy as np
 import torch
 
 from src.qe_sac.env_opendss import VVCEnvOpenDSS
-from src.qe_sac.qe_sac_policy import QESACAgent
-from src.qe_sac.sac_baseline import ClassicalSACAgent
+from src.qe_sac.qe_sac_policy import QESACAgent, QCSACAgent
+from src.qe_sac.sac_baseline import ClassicalSACAgent, SACAEAgent
 from src.qe_sac.trainer import QESACTrainer
+from src.qe_sac.metrics import evaluate_policy
 
-SEEDS      = [0, 1, 2]
-N_STEPS    = 50_000
-BATCH_SIZE = 256
-WARMUP     = 1_000
-CAE_INTERVAL = 500
-SAVE_DIR   = "artifacts/qe_sac"
+# ── Hyperparameters — paper-exact (Lin et al. 2025, Table 3) ─────────────────
+SEEDS        = [0, 1, 2]    # 3 seeds; set to list(range(10)) for full paper run
+N_STEPS      = 240_000      # paper: 10,000 episodes × 24 steps = 240,000
+BATCH_SIZE   = 256          # paper: 256
+WARMUP       = 1_000        # random steps before learning starts
+CAE_INTERVAL = 500          # paper: C=500 co-adaptive CAE update interval
+CAE_COLLECT  = 5_000        # paper: 5000 random obs for CAE pre-training
+CAE_PRETRAIN = 200          # paper: 200 gradient steps for CAE pre-training
+LR           = 1e-4         # paper: 1e-4
+GAMMA        = 0.99         # paper: 0.99
+TAU          = 0.005        # paper: τ=0.005
+ALPHA        = 0.2          # paper: α=0.2 (fixed entropy coefficient)
+BUFFER_SIZE  = 1_000_000    # paper: 1M replay buffer
+N_EVAL_EPS   = 10           # evaluation episodes after training
 
+DEVICE   = "cuda" if torch.cuda.is_available() else "cpu"
+SAVE_DIR = "artifacts/qe_sac_paper/opendss"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 
-def run_agent(AgentClass, env_seed, train_seed, agent_name, extra_kwargs=None):
-    """Train one agent on OpenDSS env, return episode metrics."""
-    extra_kwargs = extra_kwargs or {}
-    env = VVCEnvOpenDSS(seed=env_seed)
-    obs_dim   = env.observation_space.shape[0]   # 93
-    n_actions = int(env.action_space.nvec.prod()) # 2*2*33 = 132
+def make_env(seed: int) -> VVCEnvOpenDSS:
+    return VVCEnvOpenDSS(seed=seed)
 
-    torch.manual_seed(train_seed)
-    np.random.seed(train_seed)
 
+def run_agent(AgentClass, seed: int, agent_name: str):
+    """Train one agent on OpenDSS env for N_STEPS, return eval metrics."""
+
+    env = make_env(seed)
+    obs_dim     = env.observation_space.shape[0]          # 48
+    device_dims = list(map(int, env.action_space.nvec))   # [2,2,33,33,33,33]
+
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+    # ── Instantiate agent with paper-exact hyperparams ────────────────────────
     agent = AgentClass(
-        obs_dim=obs_dim,
-        n_actions=n_actions,
-        buffer_size=200_000,
-        **extra_kwargs,
+        obs_dim     = obs_dim,
+        device_dims = device_dims,
+        lr          = LR,
+        gamma       = GAMMA,
+        tau         = TAU,
+        alpha       = ALPHA,
+        buffer_size = BUFFER_SIZE,
+        device      = DEVICE,
     )
 
+    # ── CAE / PCA pre-training (Algorithm 1, pre-step) ────────────────────────
+    if isinstance(agent, QESACAgent):
+        # Paper: collect 5000 random observations, train CAE for 200 steps
+        agent.pretrain_cae(env, n_collect=CAE_COLLECT, n_train_steps=CAE_PRETRAIN)
+        env = make_env(seed)   # reset env after random collection
+
+    if isinstance(agent, QCSACAgent):
+        # QC-SAC: fit PCA offline on 5000 random observations (then frozen)
+        agent.pretrain_pca(env, n_collect=CAE_COLLECT)
+        env = make_env(seed)
+
+    if isinstance(agent, SACAEAgent):
+        # SAC-AE: same CAE pre-training as QE-SAC
+        agent.pretrain_cae(env, n_collect=CAE_COLLECT, n_train_steps=CAE_PRETRAIN)
+        env = make_env(seed)
+
+    # ── Training ──────────────────────────────────────────────────────────────
     trainer = QESACTrainer(
         agent, env,
-        batch_size=BATCH_SIZE,
-        cae_update_interval=CAE_INTERVAL,
-        warmup_steps=WARMUP,
-        log_interval=100,
-        save_dir=SAVE_DIR,
+        batch_size          = BATCH_SIZE,
+        cae_update_interval = CAE_INTERVAL,
+        warmup_steps        = WARMUP,
+        log_interval        = 50,
+        save_dir            = SAVE_DIR,
+        device              = DEVICE,
     )
 
     print(f"\n{'='*60}")
-    print(f"  {agent_name}  |  seed={train_seed}  |  obs={obs_dim}-dim  |  n_actions={n_actions}")
+    print(f"  {agent_name}  seed={seed}  obs={obs_dim}  devices={device_dims}")
+    print(f"  params={agent.param_count():,}  steps={N_STEPS:,}")
+    print(f"  lr={LR}  gamma={GAMMA}  tau={TAU}  alpha={ALPHA}  buf={BUFFER_SIZE:,}")
     print(f"{'='*60}")
-    metrics = trainer.train(n_steps=N_STEPS)
+
+    trainer.train(n_steps=N_STEPS)
 
     # Save checkpoint
-    ckpt = os.path.join(SAVE_DIR, f"opendss_{agent_name.lower().replace(' ','_')}_seed{train_seed}.pt")
+    tag = agent_name.lower().replace(" ", "_").replace("-", "_")
+    ckpt = os.path.join(SAVE_DIR, f"{tag}_seed{seed}.pt")
     agent.save(ckpt)
 
-    ep_rewards = np.array(metrics.episode_rewards)
-    ep_vviols  = np.array(metrics.episode_vviols)
-    return {
-        "mean_reward": float(ep_rewards.mean()),
-        "std_reward":  float(ep_rewards.std()),
-        "mean_vviol":  float(ep_vviols.mean()),
-        "total_vviols": int(ep_vviols.sum()),
-        "n_params": agent.param_count(),
-        "obs_dim": obs_dim,
-    }
+    # ── Evaluation ────────────────────────────────────────────────────────────
+    eval_env = make_env(seed + 100)
+    result = evaluate_policy(eval_env, agent, n_episodes=N_EVAL_EPS, device="cpu")
+    result["n_params"] = agent.param_count()
+    result["obs_dim"]  = obs_dim
+    print(f"  eval  reward={result['mean_reward']:.3f}  vviol={result['mean_v_viols']:.1f}")
+    return result
 
 
 def main():
+    agents_cfg = [
+        ("QE-SAC",        QESACAgent),
+        ("Classical-SAC", ClassicalSACAgent),
+        ("SAC-AE",        SACAEAgent),
+        ("QC-SAC",        QCSACAgent),
+    ]
+
     results = {}
 
-    # --- QE-SAC on OpenDSS ---
-    qe_rewards = []
-    qe_vviols  = []
-    for s in SEEDS:
-        r = run_agent(QESACAgent, env_seed=s, train_seed=s, agent_name="QE-SAC OpenDSS")
-        qe_rewards.append(r["mean_reward"])
-        qe_vviols.append(r["mean_vviol"])
-        print(f"  Seed {s}: reward={r['mean_reward']:.2f}, vviol={r['mean_vviol']:.2f}")
+    for agent_name, AgentClass in agents_cfg:
+        seed_rewards = []
+        seed_vviols  = []
+        n_params     = 0
 
-    results["QE-SAC (OpenDSS)"] = {
-        "mean_reward": float(np.mean(qe_rewards)),
-        "std_reward":  float(np.std(qe_rewards)),
-        "mean_vviol":  float(np.mean(qe_vviols)),
-        "n_params":    11430,
-        "obs_dim":     93,
-        "seeds":       qe_rewards,
-    }
+        for seed in SEEDS:
+            r = run_agent(AgentClass, seed, agent_name)
+            seed_rewards.append(r["mean_reward"])
+            seed_vviols.append(r["mean_v_viols"])
+            n_params = r["n_params"]
 
-    # --- Classical SAC on OpenDSS ---
-    cl_rewards = []
-    cl_vviols  = []
-    for s in SEEDS:
-        r = run_agent(ClassicalSACAgent, env_seed=s, train_seed=s, agent_name="Classical SAC OpenDSS")
-        cl_rewards.append(r["mean_reward"])
-        cl_vviols.append(r["mean_vviol"])
-        print(f"  Seed {s}: reward={r['mean_reward']:.2f}, vviol={r['mean_vviol']:.2f}")
+        results[agent_name] = {
+            "mean":    float(np.mean(seed_rewards)),
+            "std":     float(np.std(seed_rewards)),
+            "seeds":   seed_rewards,
+            "vviols":  seed_vviols,
+            "params":  n_params,
+            "obs_dim": r["obs_dim"],
+            "env":     "OpenDSS 3-phase AC (IEEE 13-bus)",
+        }
+        print(f"\n  {agent_name}: mean={results[agent_name]['mean']:.3f} "
+              f"std=±{results[agent_name]['std']:.3f}  params={n_params:,}")
 
-    results["Classical SAC (OpenDSS)"] = {
-        "mean_reward": float(np.mean(cl_rewards)),
-        "std_reward":  float(np.std(cl_rewards)),
-        "mean_vviol":  float(np.mean(cl_vviols)),
-        "n_params":    110724,
-        "obs_dim":     93,
-        "seeds":       cl_rewards,
-    }
-
-    # Save
-    out = os.path.join(SAVE_DIR, "opendss_results_13bus.json")
+    # ── Save ─────────────────────────────────────────────────────────────────
+    out = os.path.join(SAVE_DIR, "results.json")
     with open(out, "w") as f:
         json.dump(results, f, indent=2)
     print(f"\nResults saved → {out}")
 
-    # Print comparison
-    print("\n" + "="*70)
-    print("  OPENDSS RESULTS — IEEE 13-bus (3 seeds × 50K steps)")
-    print("="*70)
+    # ── Comparison table ──────────────────────────────────────────────────────
+    print("\n" + "="*72)
+    print("  RESULTS vs PAPER — OpenDSS IEEE 13-bus")
+    print(f"  ({len(SEEDS)} seeds × {N_STEPS:,} steps,  lr={LR}, γ={GAMMA}, τ={TAU}, α={ALPHA})")
+    print("="*72)
+    print(f"  {'Agent':20s}  {'Mean':>8s}  {'Std':>7s}  {'Params':>10s}")
+    print("-"*72)
     for name, r in results.items():
-        print(f"  {name:30s}  reward={r['mean_reward']:8.2f} ±{r['std_reward']:.2f}"
-              f"  vviol={r['mean_vviol']:.1f}  params={r['n_params']:,}")
+        print(f"  {name:20s}  {r['mean']:8.3f}  ±{r['std']:6.3f}  {r['params']:>10,}")
 
-    # DistFlow reference
-    try:
-        with open(os.path.join(SAVE_DIR, "results_13bus.json")) as f:
-            df = json.load(f)
-        print("\n  DistFlow reference (42-dim, same seeds):")
-        for name, r in df.items():
-            print(f"  {name:30s}  reward={r['mean_reward']:8.2f} ±{r['std_reward']:.2f}")
-    except Exception:
-        pass
-
-    print("="*70)
+    print("\n  Paper reference (Lin et al. 2025 — full PowerGym OpenDSS):")
+    print(f"  {'QE-SAC':20s}  {'−5.390':>8s}  {'':>7s}  {'4,872':>10s}")
+    print(f"  {'Classical-SAC':20s}  {'−5.410':>8s}  {'':>7s}  {'899,729':>10s}")
+    print("="*72)
 
 
 if __name__ == "__main__":

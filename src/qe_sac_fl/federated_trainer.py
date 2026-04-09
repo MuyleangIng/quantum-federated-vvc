@@ -214,10 +214,11 @@ class FederatedTrainer:
 
     def _build_client(self, client_cfg: ClientConfig) -> tuple:
         """Build (env, agent, trainer) for one client on its assigned device."""
-        env   = _make_env(client_cfg.env_id, client_cfg.seed)
+        env         = _make_env(client_cfg.env_id, client_cfg.seed)
+        device_dims = list(map(int, env.action_space.nvec))
         agent = QESACAgent(
             obs_dim     = client_cfg.obs_dim,
-            n_actions   = client_cfg.n_actions,
+            device_dims = device_dims,
             lr          = self.cfg.lr,
             gamma       = self.cfg.gamma,
             tau         = self.cfg.tau,
@@ -348,10 +349,12 @@ class FederatedTrainer:
 
     def _build_aligned_client(self, client_cfg: ClientConfig) -> tuple:
         """Build (env, AlignedQESACAgent, QESACTrainer) for one client."""
-        env   = _make_env(client_cfg.env_id, client_cfg.seed)
+        env         = _make_env(client_cfg.env_id, client_cfg.seed)
+        obs_dim     = env.observation_space.shape[0]
+        device_dims = list(map(int, env.action_space.nvec))
         agent = AlignedQESACAgent(
-            obs_dim     = client_cfg.obs_dim,
-            n_actions   = client_cfg.n_actions,
+            obs_dim     = obs_dim,
+            device_dims = device_dims,
             lr          = self.cfg.lr,
             gamma       = self.cfg.gamma,
             tau         = self.cfg.tau,

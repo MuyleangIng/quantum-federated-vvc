@@ -141,6 +141,25 @@ class _FactorizedSACBase:
     Subclasses set self.actor, self.critic1/2, self.target1/2, self.actor_opt, etc.
     """
 
+    def _init_alpha_tuning(
+        self,
+        device_dims: list[int],
+        lr:          float,
+        device:      str,
+        init_alpha:  float = 0.2,
+    ) -> None:
+        """
+        Initialize automatic entropy temperature tuning (Algorithm 1, Eq. 33).
+        Target entropy = Σ_i log(|A_i|) — maximum entropy per device.
+        init_alpha sets the starting value (implementation choice; paper does not specify).
+        """
+        import math
+        # Eq. (29): Ĥ^j = 0.5 × log(|A^j|)  — paper-specific target entropy
+        self._target_entropy = sum(0.5 * math.log(d) for d in device_dims)
+        self.log_alpha = torch.tensor([math.log(init_alpha)], requires_grad=True, device=device)
+        self.alpha     = init_alpha
+        self.alpha_opt = optim.Adam([self.log_alpha], lr=lr)
+
     def _sac_update(
         self,
         batch_size: int = 256,
@@ -162,25 +181,28 @@ class _FactorizedSACBase:
             q1n = self.target1(nobs)
             q2n = self.target2(nobs)
 
-            # Soft value V(s') = Σ_i E_πi [min(Q1i,Q2i) − α log πi]
-            v_next = torch.zeros(B, 1, device=self.device)
+            # Per-device targets — Eq. (30):
+            # y^j = r + γ · p^j(s')^T (min_i Q^j_φi(s',·) − α log p^j(s'))
+            # Each device j gets its own target using only its own p^j and Q^j.
+            # Shape of each target_q_j: (B, 1)
+            target_q_per_dev = []
             for i in range(self.n_dev):
-                p = next_probs[i]                                          # (B, |Ai|)
-                q = torch.min(q1n[i], q2n[i])                             # (B, |Ai|)
-                vi = (p * (q - self.alpha * torch.log(p + 1e-8))).sum(-1, keepdim=True)
-                v_next = v_next + vi
-            target_q = rew + (1 - done) * self.gamma * v_next             # (B, 1)
+                p   = next_probs[i]                                        # (B, |Ai|)
+                q   = torch.min(q1n[i], q2n[i])                           # (B, |Ai|)
+                v_j = (p * (q - self.alpha * torch.log(p + 1e-8))).sum(-1, keepdim=True)  # (B,1)
+                target_q_per_dev.append(rew + (1 - done) * self.gamma * v_j)              # (B,1)
 
         q1_list = self.critic1(obs)
         q2_list = self.critic2(obs)
+        # Eq. (31): L(φ) = (1/N) Σ_j MSE(Q^j(s,a^j), y^j)
         c1_loss = sum(
-            F.mse_loss(q1_list[i][torch.arange(B), acts[:, i]].unsqueeze(1), target_q)
+            F.mse_loss(q1_list[i][torch.arange(B), acts[:, i]].unsqueeze(1), target_q_per_dev[i])
             for i in range(self.n_dev)
-        )
+        ) / self.n_dev
         c2_loss = sum(
-            F.mse_loss(q2_list[i][torch.arange(B), acts[:, i]].unsqueeze(1), target_q)
+            F.mse_loss(q2_list[i][torch.arange(B), acts[:, i]].unsqueeze(1), target_q_per_dev[i])
             for i in range(self.n_dev)
-        )
+        ) / self.n_dev
         self.critic1_opt.zero_grad(); c1_loss.backward(); self.critic1_opt.step()
         self.critic2_opt.zero_grad(); c2_loss.backward(); self.critic2_opt.step()
 
@@ -188,14 +210,33 @@ class _FactorizedSACBase:
         probs_list = self.actor(obs)
         q1_pi = self.critic1(obs)
         q2_pi = self.critic2(obs)
+        # Eq. (32): L(ζ) = (1/N) Σ_j p^j^T (α log p^j − min_i Q^j_φi)
         actor_loss = sum(
             (probs_list[i] * (
                 self.alpha * torch.log(probs_list[i] + 1e-8)
                 - torch.min(q1_pi[i], q2_pi[i])
             )).sum(-1).mean()
             for i in range(self.n_dev)
-        )
+        ) / self.n_dev
         self.actor_opt.zero_grad(); actor_loss.backward(); self.actor_opt.step()
+
+        # ── Alpha update — Eq. (33) ────────────────────────────────────────
+        # L(α) = (1/N) Σ_j p^j · (−α log p^j − α Ĥ^j)
+        #       = α · (H_current − H_target)
+        # Minimising pushes α down when H > Ĥ, up when H < Ĥ.
+        if hasattr(self, "log_alpha"):
+            with torch.no_grad():
+                probs_alpha = self.actor(obs)
+            # mean entropy across devices (1/N factor from Eq. 33)
+            H_current = sum(
+                -(p * torch.log(p + 1e-8)).sum(-1)
+                for p in probs_alpha
+            ).mean() / self.n_dev
+            alpha_loss = self.log_alpha.exp() * (H_current - self._target_entropy / self.n_dev)
+            self.alpha_opt.zero_grad()
+            alpha_loss.backward()
+            self.alpha_opt.step()
+            self.alpha = float(self.log_alpha.exp().detach())
 
         # ── Soft target update ─────────────────────────────────────────────
         for p, tp in zip(self.critic1.parameters(), self.target1.parameters()):
@@ -254,6 +295,10 @@ class QESACAgent(_FactorizedSACBase):
         self.actor_opt   = optim.Adam(self.actor.parameters(),   lr=lr)
         self.critic1_opt = optim.Adam(self.critic1.parameters(), lr=lr)
         self.critic2_opt = optim.Adam(self.critic2.parameters(), lr=lr)
+        self._init_alpha_tuning(device_dims, lr, device, init_alpha=alpha)
+        # Persistent CAE optimizer — reused for pretraining and co-adaptive updates.
+        # lr=1e-3 is an implementation choice; paper does not specify CAE optimizer lr.
+        self.cae_opt = optim.Adam(self.actor.cae.parameters(), lr=1e-3)
 
         # ── RL replay buffer B ─────────────────────────────────────────────
         self._buf_obs  = np.zeros((buffer_size, obs_dim), dtype=np.float32)
@@ -313,6 +358,7 @@ class QESACAgent(_FactorizedSACBase):
             cae_loss = train_cae(
                 self.actor.cae, cae_obs,
                 n_steps=cae_steps, device=self.device,
+                optimizer=self.cae_opt,   # reuse persistent optimizer
             )
             logs["cae_loss"] = cae_loss
 
@@ -336,6 +382,7 @@ class QESACAgent(_FactorizedSACBase):
         return train_cae(
             self.actor.cae, observations,
             n_steps=n_train_steps, device=self.device,
+            optimizer=self.cae_opt,   # reuse persistent optimizer
         )
 
     def param_count(self) -> int:
@@ -408,6 +455,7 @@ class QCSACAgent(_FactorizedSACBase):
         self.actor_opt   = optim.Adam(self.actor.parameters(),   lr=lr)
         self.critic1_opt = optim.Adam(self.critic1.parameters(), lr=lr)
         self.critic2_opt = optim.Adam(self.critic2.parameters(), lr=lr)
+        self._init_alpha_tuning(device_dims, lr, device, init_alpha=alpha)
 
         self._buf_obs  = np.zeros((buffer_size, obs_dim), dtype=np.float32)
         self._buf_act  = np.zeros((buffer_size, self.n_dev), dtype=np.int32)

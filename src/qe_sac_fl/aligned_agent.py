@@ -2,7 +2,8 @@
 AlignedQESACAgent — QE-SAC with aligned encoder for federated training.
 
 Architecture:
-    obs → LocalEncoder (private) → SharedEncoderHead (federated) → VQC (federated) → action
+    obs → LocalEncoder (private) → SharedEncoderHead (federated) → VQC (federated)
+        → N per-device heads → factorized action (same as QESACAgent)
 
 What gets federated each round:
     SharedEncoderHead  272 params
@@ -26,43 +27,47 @@ import torch.nn.functional as F
 
 from src.qe_sac.vqc import VQCLayer
 from src.qe_sac.metrics import count_parameters
+from src.qe_sac.qe_sac_policy import _FactorizedCritic, _FactorizedSACBase
 from src.qe_sac_fl.aligned_encoder import AlignedCAE, train_aligned_cae
+from src.qe_sac.autoencoder import collect_random_observations
 
 
 # ---------------------------------------------------------------------------
-# Aligned actor network
+# Aligned actor network  (mirrors QESACActorNetwork but with AlignedCAE)
 # ---------------------------------------------------------------------------
 
 class AlignedActorNetwork(nn.Module):
     """
-    Actor that uses AlignedCAE instead of flat CAE.
-    Forward path: obs → LocalEncoder → SharedEncoderHead → VQC → head → probs
-    """
-    def __init__(self, obs_dim: int, n_actions: int, noise_lambda: float = 0.0):
-        super().__init__()
-        self.cae  = AlignedCAE(obs_dim)       # has .local_encoder and .shared_head
-        self.vqc  = VQCLayer(noise_lambda=noise_lambda)
-        self.head = nn.Linear(8, n_actions)
+    Factorized actor: AlignedCAE → VQC → N per-device heads.
 
-    def forward(self, obs: torch.Tensor) -> torch.Tensor:
-        latent  = self.cae.encode(obs)        # (batch, 8) in [-π, π]
-        vqc_out = self.vqc(latent)            # (batch, 8) in [-1, 1]
-        logits  = self.head(vqc_out)          # (batch, n_actions)
-        return F.softmax(logits, dim=-1)
+    Same structure as QESACActorNetwork except the encoder is split into
+    LocalEncoder (private) + SharedEncoderHead (federated).
+
+    obs → LocalEncoder → SharedEncoderHead → VQC → [Linear(8,|Ai|) + Softmax] × N
+    """
+
+    def __init__(self, obs_dim: int, device_dims: list[int], noise_lambda: float = 0.0):
+        super().__init__()
+        self.cae   = AlignedCAE(obs_dim)
+        self.vqc   = VQCLayer(noise_lambda=noise_lambda)
+        self.heads = nn.ModuleList([nn.Linear(8, d) for d in device_dims])
+
+    def forward(self, obs: torch.Tensor) -> list[torch.Tensor]:
+        z = self.cae.encode(obs)           # (B, 8) in [-π, π]
+        q = self.vqc(z)                    # (B, 8) in [-1, 1]
+        return [F.softmax(h(q), dim=-1) for h in self.heads]
 
     def select_action(self, obs: torch.Tensor, deterministic: bool = False) -> np.ndarray:
-        probs = self.forward(obs)
-        if deterministic:
-            action = probs.argmax(dim=-1)
-        else:
-            action = torch.multinomial(probs, 1).squeeze(-1)
-        return action.cpu().numpy()
+        probs_list = self.forward(obs)
+        return np.array([
+            int((p.argmax(-1) if deterministic else torch.multinomial(p, 1).squeeze(-1)).cpu())
+            for p in probs_list
+        ], dtype=np.int64)
+
+    # --- Federation interface ---
 
     def get_shared_weights(self) -> dict:
-        """
-        Return weights to send to server for FedAvg.
-        Includes SharedEncoderHead + VQC weights.
-        """
+        """Return SharedEncoderHead + VQC weights for FedAvg."""
         return {
             "shared_head": self.cae.get_shared_weights(),
             "vqc":         self.vqc.weights.data.clone().cpu(),
@@ -72,65 +77,49 @@ class AlignedActorNetwork(nn.Module):
         """Load aggregated weights from server."""
         self.cae.set_shared_weights(shared["shared_head"])
         with torch.no_grad():
-            self.vqc.weights.copy_(
-                shared["vqc"].to(self.vqc.weights.device)
-            )
-
-
-# ---------------------------------------------------------------------------
-# Critic (same as QESACAgent — reused directly)
-# ---------------------------------------------------------------------------
-
-class _MLPCritic(nn.Module):
-    def __init__(self, obs_dim: int, n_actions: int, hidden: int = 256):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(obs_dim + n_actions, hidden), nn.ReLU(),
-            nn.Linear(hidden, hidden),              nn.ReLU(),
-            nn.Linear(hidden, 1),
-        )
-
-    def forward(self, obs: torch.Tensor, act: torch.Tensor) -> torch.Tensor:
-        return self.net(torch.cat([obs, act], dim=-1))
+            self.vqc.weights.copy_(shared["vqc"].to(self.vqc.weights.device))
 
 
 # ---------------------------------------------------------------------------
 # AlignedQESACAgent
 # ---------------------------------------------------------------------------
 
-class AlignedQESACAgent:
+class AlignedQESACAgent(_FactorizedSACBase):
     """
-    QE-SAC agent with aligned encoder.
+    QE-SAC agent with aligned encoder for cross-feeder federated learning.
+
     Drop-in replacement for QESACAgent in the federated trainer.
-    Same external API: store / update / select_action / save / load.
-    Additional methods: get_shared_weights / set_shared_weights.
+    Uses identical factorized SAC update logic (inherits _FactorizedSACBase).
+
+    Additional methods: get_shared_weights / set_shared_weights / pretrain_cae.
     """
 
     def __init__(
         self,
-        obs_dim: int,
-        n_actions: int,
-        lr: float = 3e-4,
-        gamma: float = 0.99,
-        tau: float = 0.005,
-        alpha: float = 0.2,
-        buffer_size: int = 200_000,
+        obs_dim:      int,
+        device_dims:  list[int],
+        lr:           float = 3e-4,
+        gamma:        float = 0.99,
+        tau:          float = 0.005,
+        alpha:        float = 0.2,
+        buffer_size:  int   = 200_000,
         noise_lambda: float = 0.0,
-        device: str = "cpu",
+        device:       str   = "cpu",
     ):
-        self.obs_dim   = obs_dim
-        self.n_actions = n_actions
-        self.gamma     = gamma
-        self.tau       = tau
-        self.alpha     = alpha
-        self.device    = device
+        self.obs_dim     = obs_dim
+        self.device_dims = device_dims
+        self.n_dev       = len(device_dims)
+        self.gamma       = gamma
+        self.tau         = tau
+        self.alpha       = alpha
+        self.device      = device
         self._grad_steps = 0
 
-        self.actor   = AlignedActorNetwork(obs_dim, n_actions, noise_lambda).to(device)
-        self.critic1 = _MLPCritic(obs_dim, n_actions).to(device)
-        self.critic2 = _MLPCritic(obs_dim, n_actions).to(device)
-        self.target1 = _MLPCritic(obs_dim, n_actions).to(device)
-        self.target2 = _MLPCritic(obs_dim, n_actions).to(device)
+        self.actor   = AlignedActorNetwork(obs_dim, device_dims, noise_lambda).to(device)
+        self.critic1 = _FactorizedCritic(obs_dim, device_dims).to(device)
+        self.critic2 = _FactorizedCritic(obs_dim, device_dims).to(device)
+        self.target1 = _FactorizedCritic(obs_dim, device_dims).to(device)
+        self.target2 = _FactorizedCritic(obs_dim, device_dims).to(device)
         self.target1.load_state_dict(self.critic1.state_dict())
         self.target2.load_state_dict(self.critic2.state_dict())
 
@@ -138,9 +127,9 @@ class AlignedQESACAgent:
         self.critic1_opt = optim.Adam(self.critic1.parameters(), lr=lr)
         self.critic2_opt = optim.Adam(self.critic2.parameters(), lr=lr)
 
-        # Replay buffer
+        # Replay buffer — MultiDiscrete actions stored as int arrays (n_dev,)
         self._buf_obs  = np.zeros((buffer_size, obs_dim),  dtype=np.float32)
-        self._buf_act  = np.zeros((buffer_size, n_actions), dtype=np.float32)
+        self._buf_act  = np.zeros((buffer_size, self.n_dev), dtype=np.int32)
         self._buf_rew  = np.zeros(buffer_size,              dtype=np.float32)
         self._buf_next = np.zeros((buffer_size, obs_dim),  dtype=np.float32)
         self._buf_done = np.zeros(buffer_size,              dtype=np.float32)
@@ -151,11 +140,9 @@ class AlignedQESACAgent:
     # --- Federation interface ---
 
     def get_shared_weights(self) -> dict:
-        """Extract SharedEncoderHead + VQC weights for FedAvg."""
         return self.actor.get_shared_weights()
 
     def set_shared_weights(self, shared: dict) -> None:
-        """Load aggregated SharedEncoderHead + VQC weights from server."""
         self.actor.set_shared_weights(shared)
 
     # --- Standard RL interface ---
@@ -163,24 +150,17 @@ class AlignedQESACAgent:
     def select_action(self, obs: torch.Tensor, deterministic: bool = False) -> np.ndarray:
         return self.actor.select_action(obs, deterministic)
 
-    def _action_to_onehot(self, action) -> np.ndarray:
-        oh = np.zeros(self.n_actions, dtype=np.float32)
-        oh[int(action)] = 1.0
-        return oh
-
     def store(
         self,
-        obs,
-        action,
-        reward,
-        next_obs,
-        done,
-        v_viol: float = 0.0,
+        obs:      np.ndarray,
+        action:   np.ndarray,   # MultiDiscrete array (n_dev,)
+        reward:   float,
+        next_obs: np.ndarray,
+        done:     bool,
+        v_viol:   float = 0.0,
     ) -> None:
-        # `QESACTrainer` always passes `v_viol`; aligned training does not
-        # currently use it in the replay buffer, so we accept and ignore it.
         self._buf_obs[self._ptr]  = obs
-        self._buf_act[self._ptr]  = self._action_to_onehot(action)
+        self._buf_act[self._ptr]  = action
         self._buf_rew[self._ptr]  = reward
         self._buf_next[self._ptr] = next_obs
         self._buf_done[self._ptr] = float(done)
@@ -189,59 +169,18 @@ class AlignedQESACAgent:
 
     def update(
         self,
-        batch_size: int = 256,
+        batch_size:          int = 256,
         cae_update_interval: int = 500,
-        cae_steps: int = 50,
+        cae_steps:           int = 50,
     ) -> dict:
-        if self._size < batch_size:
-            return {}
-
-        idx  = np.random.randint(0, self._size, batch_size)
-        obs  = torch.tensor(self._buf_obs[idx],  device=self.device)
-        act  = torch.tensor(self._buf_act[idx],  device=self.device)
-        rew  = torch.tensor(self._buf_rew[idx],  device=self.device).unsqueeze(1)
-        nobs = torch.tensor(self._buf_next[idx], device=self.device)
-        done = torch.tensor(self._buf_done[idx], device=self.device).unsqueeze(1)
-
-        # Critic update
-        with torch.no_grad():
-            next_probs = self.actor(nobs)
-            q1_next = self.target1(nobs, next_probs)
-            q2_next = self.target2(nobs, next_probs)
-            q_next  = torch.min(q1_next, q2_next)
-            entropy = -(next_probs * torch.log(next_probs + 1e-8)).sum(dim=-1, keepdim=True)
-            target_q = rew + (1 - done) * self.gamma * (q_next + self.alpha * entropy)
-
-        q1 = self.critic1(obs, act)
-        q2 = self.critic2(obs, act)
-        c1_loss = F.mse_loss(q1, target_q)
-        c2_loss = F.mse_loss(q2, target_q)
-        self.critic1_opt.zero_grad(); c1_loss.backward(); self.critic1_opt.step()
-        self.critic2_opt.zero_grad(); c2_loss.backward(); self.critic2_opt.step()
-
-        # Actor update (local encoder + shared head + VQC jointly)
-        probs = self.actor(obs)
-        q1_pi = self.critic1(obs, probs)
-        q2_pi = self.critic2(obs, probs)
-        q_pi  = torch.min(q1_pi, q2_pi)
-        entropy = -(probs * torch.log(probs + 1e-8)).sum(dim=-1, keepdim=True)
-        actor_loss = -(q_pi + self.alpha * entropy).mean()
-        self.actor_opt.zero_grad(); actor_loss.backward(); self.actor_opt.step()
-
-        # Soft target update
-        for p, tp in zip(self.critic1.parameters(), self.target1.parameters()):
-            tp.data.copy_(self.tau * p.data + (1 - self.tau) * tp.data)
-        for p, tp in zip(self.critic2.parameters(), self.target2.parameters()):
-            tp.data.copy_(self.tau * p.data + (1 - self.tau) * tp.data)
+        logs = self._sac_update(batch_size)
+        if not logs:
+            return logs
 
         self._grad_steps += 1
-        logs = {
-            "critic_loss": float((c1_loss + c2_loss) / 2),
-            "actor_loss":  float(actor_loss),
-        }
 
         # Co-adaptive AlignedCAE update every C steps
-        if self._grad_steps % cae_update_interval == 0:
+        if self._grad_steps % cae_update_interval == 0 and self._size > 0:
             recent_obs = self._buf_obs[: self._size]
             cae_loss = train_aligned_cae(
                 self.actor.cae, recent_obs,
@@ -250,6 +189,19 @@ class AlignedQESACAgent:
             logs["cae_loss"] = cae_loss
 
         return logs
+
+    def pretrain_cae(
+        self,
+        env,
+        n_collect:     int = 5_000,
+        n_train_steps: int = 200,
+    ) -> float:
+        """Pre-train AlignedCAE on random-policy observations before RL."""
+        observations = collect_random_observations(env, n_steps=n_collect)
+        return train_aligned_cae(
+            self.actor.cae, observations,
+            n_steps=n_train_steps, device=self.device,
+        )
 
     def param_count(self) -> int:
         return count_parameters(self.actor)

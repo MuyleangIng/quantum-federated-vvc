@@ -117,6 +117,7 @@ class ClassicalSACAgent(_FactorizedSACBase):
         self.actor_opt   = optim.Adam(self.actor.parameters(),   lr=lr)
         self.critic1_opt = optim.Adam(self.critic1.parameters(), lr=lr)
         self.critic2_opt = optim.Adam(self.critic2.parameters(), lr=lr)
+        self._init_alpha_tuning(device_dims, lr, device, init_alpha=alpha)
 
         self._buf_obs  = np.zeros((buffer_size, obs_dim), dtype=np.float32)
         self._buf_act  = np.zeros((buffer_size, self.n_dev), dtype=np.int32)
@@ -208,6 +209,9 @@ class SACAEAgent(_FactorizedSACBase):
         self.actor_opt   = optim.Adam(self.actor.parameters(),   lr=lr)
         self.critic1_opt = optim.Adam(self.critic1.parameters(), lr=lr)
         self.critic2_opt = optim.Adam(self.critic2.parameters(), lr=lr)
+        self._init_alpha_tuning(device_dims, lr, device, init_alpha=alpha)
+        # Persistent CAE optimizer — reused for both pretraining and co-adaptive updates
+        self.cae_opt = optim.Adam(self.actor.cae.parameters(), lr=1e-3)
 
         self._buf_obs  = np.zeros((buffer_size, obs_dim), dtype=np.float32)
         self._buf_act  = np.zeros((buffer_size, self.n_dev), dtype=np.int32)
@@ -244,7 +248,8 @@ class SACAEAgent(_FactorizedSACBase):
         self._buf_cae[:n] = observations[:n]
         self._cae_ptr  = n % self._max
         self._cae_size = n
-        return train_cae(self.actor.cae, observations, n_steps=n_train_steps, device=self.device)
+        return train_cae(self.actor.cae, observations, n_steps=n_train_steps,
+                         device=self.device, optimizer=self.cae_opt)
 
     def update(self, batch_size=256, cae_update_interval=500, cae_steps=50, **kwargs) -> dict[str, float]:
         logs = self._sac_update(batch_size)
@@ -256,6 +261,7 @@ class SACAEAgent(_FactorizedSACBase):
             cae_obs = self._buf_cae[: self._cae_size]
             logs["cae_loss"] = train_cae(
                 self.actor.cae, cae_obs, n_steps=cae_steps, device=self.device,
+                optimizer=self.cae_opt,   # reuse persistent optimizer
             )
         return logs
 
