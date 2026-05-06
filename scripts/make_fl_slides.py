@@ -150,7 +150,7 @@ txt(s, "Federated quantum RL — only 280 model parameters\ntravel to the server
 
 # 3 discoveries
 rect(s, 0.4, 2.65, 3.8, 1.5, PANEL); rect(s, 0.4, 2.65, 0.08, 1.5, RED)
-txt(s, "DISCOVERY 1 — QLSI", 0.6, 2.72, 3.5, 0.38, size=12, bold=True, color=RED)
+txt(s, "DISCOVERY 1 — heterogeneous FL", 0.6, 2.72, 3.5, 0.38, size=12, bold=True, color=RED)
 txt(s, "Naive quantum FL makes\nevery client WORSE.\n(Not in any paper.)", 0.6, 3.1, 3.5, 0.95, size=13, color=WHITE)
 
 rect(s, 4.7, 2.65, 3.8, 1.5, PANEL); rect(s, 4.7, 2.65, 0.08, 1.5, ORANGE)
@@ -180,7 +180,7 @@ txt(s, "02  NEW PROGRESS — Three Novel Discoveries", 0.4, 0.1, 12, 0.55,
     size=22, bold=True, color=WHITE)
 
 rows = [
-    ("QLSI", "Quantum Latent Space Incompatibility",
+    ("heterogeneous FL", "heterogeneous latent space mismatch",
      "Naive FedAvg on VQC only",
      "13-bus −336.6  34-bus −69.6  123-bus −5420.5\n(local: −331.4 / −65.5 / −5364.4)  ALL WORSE",
      "FedProx, SCAFFOLD address data heterogeneity — not encoder incompatibility",
@@ -296,7 +296,7 @@ for i, h in enumerate(headers):
 
 rows = [
     ("Local only (baseline)",   "-331.4", "-65.5",  "-5364.4", "—",      "Reference",             PANEL, WHITE),
-    ("Unaligned FL",            "-336.6", "-69.6",  "-5420.5", "NO ❌",  "← QLSI: all worse",     PANEL, RED),
+    ("Unaligned FL",            "-336.6", "-69.6",  "-5420.5", "NO ❌",  "← heterogeneous FL: all worse",     PANEL, RED),
     ("Aligned FL  50 rounds",   "-326.3", "-85.0",  "-5402.5", "NO ❌",  "← CSA: only 13-bus",    PANEL, ORANGE),
     ("Aligned FL  200 rounds",  "-339.5", "-69.3",  "-5251.4", "NO ❌",  "← CSA: only 123-bus",   PANEL, ORANGE),
     ("Partial FL  (2/3 clients)","-341.4","-79.8",  "-5402.9", "NO ❌",  "← PAD: all worse",      PANEL, YELLOW),
@@ -381,7 +381,7 @@ for label, x, w in [("Finding", 0.35, 2.2), ("Closest Existing Paper", 2.6, 3.8)
     txt(s, label, x, 0.87, w-0.1, 0.38, size=12, bold=True, color=WHITE)
 
 disc = [
-    ("QLSI",
+    ("heterogeneous FL",
      "Li 2020 — FedProx\nKarimireddy 2020 — SCAFFOLD",
      "Heterogeneous data distributions\ncause client drift in FedAvg",
      "Encoder latent space incompatibility.\nHappens even with IID data.",
@@ -440,7 +440,7 @@ actions = [
       "Target: partial FL passes H6 for all 3 clients"],
      ORANGE, "🔄 Implementing"),
     ("Week 3", "Math paragraph per finding for paper",
-     ["QLSI: orthogonal latent bases argument (1 paragraph)",
+     ["heterogeneous FL: orthogonal latent bases argument (1 paragraph)",
       "CSA: gradient dominance inequality (1 paragraph)",
       "PAD: coupling constraint breaks McMahan proof (1 paragraph)",
       "Transforms observations into mechanisms → publishable"],
@@ -476,7 +476,7 @@ phases = [
      GREEN, "NOW"),
     ("APRIL 2026\nWeek 3–4",
      "Math justification + Paper draft",
-     ["One math paragraph per novel finding (QLSI, CSA, PAD)",
+     ["One math paragraph per novel finding (heterogeneous FL, CSA, PAD)",
       "Write Sections I–V: Intro, Background, Architecture, Results",
       "Generate publication-quality figures"],
      CYAN, "NEXT"),
@@ -531,7 +531,7 @@ txt(s, "SIX CONTRIBUTIONS", 1.7, 1.0, 10, 0.45,
 divider(s, 1.52)
 
 contribs = [
-    ("1", "QLSI",              "First identification: naive quantum FL hurts all clients", RED),
+    ("1", "heterogeneous FL",              "First identification: naive quantum FL hurts all clients", RED),
     ("2", "SharedEncoderHead", "Architecture fix: 280 federated params (395× less than classical)", GREEN),
     ("3", "CSA",               "First identification: gradient scale prevents simultaneous benefit", ORANGE),
     ("4", "PAD",               "First identification: partial dropout breaks encoder alignment", YELLOW),

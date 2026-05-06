@@ -1,0 +1,50 @@
+[
+  {
+    "hidden_dim": 16,
+    "head_params": 136,
+    "total_fed_params": 152,
+    "bytes_per_round": 3648,
+    "final_rewards": {
+      "Utility_A_13bus": -14.673183069592719,
+      "Utility_B_34bus": -3.621382310372855,
+      "Utility_C_123bus": -0.09918531617499071
+    },
+    "mean_reward": -6.131250232046855
+  },
+  {
+    "hidden_dim": 32,
+    "head_params": 264,
+    "total_fed_params": 280,
+    "bytes_per_round": 6720,
+    "final_rewards": {
+      "Utility_A_13bus": -14.694124808762268,
+      "Utility_B_34bus": -3.8254770755362615,
+      "Utility_C_123bus": -0.09543768392376359
+    },
+    "mean_reward": -6.205013189407431
+  },
+  {
+    "hidden_dim": 64,
+    "head_params": 520,
+    "total_fed_params": 536,
+    "bytes_per_round": 12864,
+    "final_rewards": {
+      "Utility_A_13bus": -14.698941480060302,
+      "Utility_B_34bus": -3.5612891458305596,
+      "Utility_C_123bus": -0.09749581767878629
+    },
+    "mean_reward": -6.119242147856549
+  },
+  {
+    "hidden_dim": 128,
+    "head_params": 1032,
+    "total_fed_params": 1048,
+    "bytes_per_round": 25152,
+    "final_rewards": {
+      "Utility_A_13bus": -14.715183414323093,
+      "Utility_B_34bus": -3.7900911053297834,
+      "Utility_C_123bus": -0.09699200237284249
+    },
+    "mean_reward": -6.200755507341906
+  }
+]

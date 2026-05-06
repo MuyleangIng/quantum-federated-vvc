@@ -1,0 +1,1059 @@
+{
+  "condition": "qfl",
+  "seed": 0,
+  "n_rounds": 50,
+  "wall_time_seconds": 4195.472136497498,
+  "bytes_communicated": 336000,
+  "logs": [
+    {
+      "client": "Utility_A_13bus",
+      "round": 0,
+      "reward": -0.5924215997113006,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 0,
+      "reward": -0.07075602179195208,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 0,
+      "reward": -0.0031489017882914286,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 1,
+      "reward": -0.5937201196775527,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 1,
+      "reward": -0.09913995792728682,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 1,
+      "reward": -0.0033463135791766655,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 2,
+      "reward": -0.5977396058617047,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 2,
+      "reward": -0.09253099237071508,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 2,
+      "reward": -0.003472780347971608,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 3,
+      "reward": -0.5988087189336698,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 3,
+      "reward": -0.08990706542944121,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 3,
+      "reward": -0.0035361819803204683,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 4,
+      "reward": -0.5970146756193201,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 4,
+      "reward": -0.09019886561868495,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 4,
+      "reward": -0.0035687481619014814,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 5,
+      "reward": -0.5939285056945492,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 5,
+      "reward": -0.08958569859132011,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 5,
+      "reward": -0.003660508483214076,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 6,
+      "reward": -0.5979074774976108,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 6,
+      "reward": -0.09672294370575979,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 6,
+      "reward": -0.003666515930583143,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 7,
+      "reward": -0.5955523297814171,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 7,
+      "reward": -0.11488699178432478,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 7,
+      "reward": -0.0037959509115080077,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 8,
+      "reward": -0.6016778554056681,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 8,
+      "reward": -0.13030084701602454,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 8,
+      "reward": -0.0038943364700741796,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 9,
+      "reward": -0.6032114103150279,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 9,
+      "reward": -0.1407380014608541,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 9,
+      "reward": -0.004036392253251166,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 10,
+      "reward": -0.5992372969526497,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 10,
+      "reward": -0.14436774997314458,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 10,
+      "reward": -0.004152505347041516,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 11,
+      "reward": -0.6028234259914202,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 11,
+      "reward": -0.14778505815435933,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 11,
+      "reward": -0.004197889320095976,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 12,
+      "reward": -0.6085551384951139,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 12,
+      "reward": -0.1566394672552857,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 12,
+      "reward": -0.004288925560538355,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 13,
+      "reward": -0.6061341354114335,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 13,
+      "reward": -0.15797178969678127,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 13,
+      "reward": -0.004310553459121294,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 14,
+      "reward": -0.6043581671274019,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 14,
+      "reward": -0.15868025815392137,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 14,
+      "reward": -0.004394878530610127,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 15,
+      "reward": -0.6064679587724388,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 15,
+      "reward": -0.16784925450685767,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 15,
+      "reward": -0.004390364829880507,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 16,
+      "reward": -0.6071885153940705,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 16,
+      "reward": -0.16843190826854593,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 16,
+      "reward": -0.004431592273537444,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 17,
+      "reward": -0.6124232244454019,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 17,
+      "reward": -0.16857424561442608,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 17,
+      "reward": -0.004461034471419979,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 18,
+      "reward": -0.6037325543716592,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 18,
+      "reward": -0.17202607457437596,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 18,
+      "reward": -0.004442060966004658,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 19,
+      "reward": -0.6075007673086624,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 19,
+      "reward": -0.17326328172198302,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 19,
+      "reward": -0.004498757477548557,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 20,
+      "reward": -0.6102177150311204,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 20,
+      "reward": -0.17749909685693657,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 20,
+      "reward": -0.0045387954446027496,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 21,
+      "reward": -0.6128198615464558,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 21,
+      "reward": -0.17798467430335926,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 21,
+      "reward": -0.004574714119307045,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 22,
+      "reward": -0.6087940419774257,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 22,
+      "reward": -0.1768392905463358,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 22,
+      "reward": -0.004515177931218614,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 23,
+      "reward": -0.6075933804635233,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 23,
+      "reward": -0.18098273591254327,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 23,
+      "reward": -0.004549690333437142,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 24,
+      "reward": -0.6059786751020373,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 24,
+      "reward": -0.18456294581479238,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 24,
+      "reward": -0.004563497043622126,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 25,
+      "reward": -0.6127410264882539,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 25,
+      "reward": -0.18683918170196528,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 25,
+      "reward": -0.004551083767921106,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 26,
+      "reward": -0.6073813758921214,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 26,
+      "reward": -0.1840171208459437,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 26,
+      "reward": -0.004560151318989989,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 27,
+      "reward": -0.6079971007497837,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 27,
+      "reward": -0.18418268540952928,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 27,
+      "reward": -0.004580889107230151,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 28,
+      "reward": -0.6146270894952682,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 28,
+      "reward": -0.18890423247718557,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 28,
+      "reward": -0.004620837643238246,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 29,
+      "reward": -0.6127484800574008,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 29,
+      "reward": -0.1894130011992809,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 29,
+      "reward": -0.004565924848850396,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 30,
+      "reward": -0.6105413519226902,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 30,
+      "reward": -0.1857387887069378,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 30,
+      "reward": -0.004637757052644503,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 31,
+      "reward": -0.6110163349317063,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 31,
+      "reward": -0.18880577600496817,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 31,
+      "reward": -0.004633679929195391,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 32,
+      "reward": -0.6099536996448329,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 32,
+      "reward": -0.1910548312839622,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 32,
+      "reward": -0.004618593839994084,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 33,
+      "reward": -0.6109659432184125,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 33,
+      "reward": -0.1914668096836361,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 33,
+      "reward": -0.00463744197684576,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 34,
+      "reward": -0.6121654884401667,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 34,
+      "reward": -0.19069196997609725,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 34,
+      "reward": -0.004585501992366526,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 35,
+      "reward": -0.6136349119286023,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 35,
+      "reward": -0.19195899187588797,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 35,
+      "reward": -0.004647749087346167,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 36,
+      "reward": -0.6105994491013047,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 36,
+      "reward": -0.18826336982657146,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 36,
+      "reward": -0.004633134184010143,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 37,
+      "reward": -0.6098180508122164,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 37,
+      "reward": -0.18904429839470532,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 37,
+      "reward": -0.0046712325088178455,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 38,
+      "reward": -0.6099398632846472,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 38,
+      "reward": -0.19084906547828742,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 38,
+      "reward": -0.0046670537429235855,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 39,
+      "reward": -0.6107603244087192,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 39,
+      "reward": -0.19507989079964907,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 39,
+      "reward": -0.004680815479301794,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 40,
+      "reward": -0.6167725248103898,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 40,
+      "reward": -0.19115395405572905,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 40,
+      "reward": -0.004666961586299008,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 41,
+      "reward": -0.6105709050180501,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 41,
+      "reward": -0.19284882354251448,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 41,
+      "reward": -0.00466794486924667,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 42,
+      "reward": -0.6088975371880203,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 42,
+      "reward": -0.19186886611714618,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 42,
+      "reward": -0.004600922508609916,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 43,
+      "reward": -0.6133301553649696,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 43,
+      "reward": -0.1931271592216486,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 43,
+      "reward": -0.004665627801683408,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 44,
+      "reward": -0.6106273641206675,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 44,
+      "reward": -0.19039821664780443,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 44,
+      "reward": -0.004632054585222255,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 45,
+      "reward": -0.6103681790301746,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 45,
+      "reward": -0.19214286811212905,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 45,
+      "reward": -0.004626041085904596,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 46,
+      "reward": -0.6098540069411172,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 46,
+      "reward": -0.19029949224826367,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 46,
+      "reward": -0.004629539827071901,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 47,
+      "reward": -0.6144089654157256,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 47,
+      "reward": -0.19048725830775945,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 47,
+      "reward": -0.004633366686544257,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 48,
+      "reward": -0.6123652283162891,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 48,
+      "reward": -0.19078027852548946,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 48,
+      "reward": -0.004652394622790484,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 49,
+      "reward": -0.6116379594470988,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 49,
+      "reward": -0.1935658117504945,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 49,
+      "reward": -0.004640065740410592,
+      "vqc_grad_norm": 0.0,
+      "steps": 1000
+    }
+  ]
+}

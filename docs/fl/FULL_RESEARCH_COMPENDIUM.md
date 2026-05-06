@@ -91,7 +91,7 @@ Variational Quantum Circuits (VQCs) have two properties useful for RL:
 
 We discovered that naively applying FedAvg to quantum RL agents makes every
 client **worse** than training alone. This had never been identified before.
-The cause is a structural incompatibility we named **QLSI** (see Section 6).
+The cause is a structural incompatibility we named **heterogeneous FL problem** (see Section 6).
 
 ---
 
@@ -174,7 +174,7 @@ obs (42–372) → CAE encoder → latent z (8) → VQC → action probs (132)
 ```
 
 The CAE is trained on self-supervised reconstruction loss before RL starts.
-This compression is the root cause of QLSI (see Section 6.1).
+This compression is the root cause of heterogeneous FL problem (see Section 6.1).
 
 ---
 
@@ -341,7 +341,7 @@ Only 280 float32 weights travel per round (2,240 bytes).
 
 ## 6. Three Novel Discoveries
 
-### 6.1 QLSI — Quantum Latent Space Incompatibility
+### 6.1 heterogeneous FL problem — Quantum Latent Space Incompatibility
 
 **What:** When each client independently trains its own full autoencoder
 (encoder + decoder), the 8 latent dimensions mean completely different
@@ -370,7 +370,7 @@ After FedAvg:
 
 **Why it is novel:**
 - Classical FL papers (FedProx, SCAFFOLD, FedBN) address non-IID *data distributions*
-- QLSI occurs even with IID data — the incompatibility is in the *input representation*
+- heterogeneous FL problem occurs even with IID data — the incompatibility is in the *input representation*
 - No quantum FL paper has identified or named this failure mode
 
 **The fix:** SharedEncoderHead — see Section 4.
@@ -379,7 +379,7 @@ After FedAvg:
 
 ### 6.2 CSA — Client Size Asymmetry
 
-**What:** Even after fixing QLSI with the SharedEncoderHead, the federation
+**What:** Even after fixing heterogeneous FL problem with the SharedEncoderHead, the federation
 favours different clients at different training rounds. The benefit rotates
 from small to large clients as training progresses.
 
@@ -462,7 +462,7 @@ Round r+2: Clients A + C participate  →  SharedHead optimised for A+C objectiv
 Client A's LocalEncoder adapts to SharedHead_{A+B}
 When Client A is absent (round r+1), SharedHead shifts toward B+C objective
 When Client A returns, its LocalEncoder is misaligned with the new SharedHead
-→ QLSI reintroduced for Client A every 2nd-3rd round
+→ heterogeneous FL problem reintroduced for Client A every 2nd-3rd round
 → The oscillation shows up as high-but-noisy VQC gradients
 ```
 
@@ -517,7 +517,7 @@ Aligned:      132,868,800 / 336,000    =   395×
 
 **This is independent of training outcome — a mathematical fact.** ✅
 
-### 7.2 QLSI — Why Unaligned FL Must Fail
+### 7.2 heterogeneous FL problem — Why Unaligned FL Must Fail
 
 **Claim:** FedAvg on VQC weights only, with independent encoders per client,
 produces a VQC that is suboptimal for every client.
@@ -622,7 +622,7 @@ point than random, the fine-tuned solution is better than local-only training.
 Condition                  13-bus      34-bus     123-bus    All pass?
 ──────────────────────────────────────────────────────────────────────
 Local only (baseline)      -331.4       -65.5     -5364.4      —
-Unaligned FL (50r)         -336.6       -69.6     -5420.5      NO  ← QLSI
+Unaligned FL (50r)         -336.6       -69.6     -5420.5      NO  ← heterogeneous FL problem
 Aligned FL (50r)           -326.3       -85.0     -5402.5      NO  ← CSA
 Aligned FL (200r)          -339.5       -69.3     -5251.4      NO  ← CSA reversal
 Partial FL 2/3 (50r)       -341.4       -79.8     -5402.9      NO  ← PAD
@@ -697,7 +697,7 @@ FedProx adds a proximal term to prevent large local updates:
 L_FedProx = L_local + (μ/2) ||θ - θ_global||²
 ```
 - Addresses: non-IID data distribution → client drift
-- Does NOT address: encoder latent space incompatibility (QLSI)
+- Does NOT address: encoder latent space incompatibility (heterogeneous FL problem)
 - Does NOT address: gradient scale imbalance from obs_dim differences (CSA)
 
 ### 9.3 vs SCAFFOLD (Karimireddy 2020)
@@ -705,7 +705,7 @@ L_FedProx = L_local + (μ/2) ||θ - θ_global||²
 SCAFFOLD uses control variates to correct gradient drift:
 - Addresses: gradient variance caused by heterogeneous data
 - Does NOT address: architectural coupling constraint (PAD)
-- Does NOT address: incompatible input representations (QLSI)
+- Does NOT address: incompatible input representations (heterogeneous FL problem)
 
 ### 9.4 vs FedBN (Li 2021)
 
@@ -736,8 +736,8 @@ by isolating the dimensional differences in the private LocalEncoder.
 | Paper | What it covers | Used for |
 |---|---|---|
 | McMahan et al. (2017) AISTATS | FedAvg algorithm + partial participation convergence | Background, contrast with PAD |
-| Li et al. (2020) ICLR | FedProx — non-IID FL with proximal regularisation | Background, contrast with QLSI |
-| Karimireddy et al. (2020) ICML | SCAFFOLD — control variates for FL | Background, contrast with QLSI |
+| Li et al. (2020) ICLR | FedProx — non-IID FL with proximal regularisation | Background, contrast with heterogeneous FL problem |
+| Karimireddy et al. (2020) ICML | SCAFFOLD — control variates for FL | Background, contrast with heterogeneous FL problem |
 | Li et al. (2021) ICLR | FedBN — local batch norm for feature shift | Background |
 | Zhao et al. (2018) arXiv:1806.00582 | Non-IID impact on FedAvg | Background, contrast with CSA |
 | McClean et al. (2018) Nature Comm | Barren plateaus in VQCs | H4 background |
@@ -754,7 +754,7 @@ by isolating the dimensional differences in the private LocalEncoder.
 
 | Gap | Why no paper covers it | Our contribution |
 |---|---|---|
-| QLSI | Quantum FL papers don't use compressed encoders; FL papers don't use VQCs | First identification, naming, and solution |
+| heterogeneous FL problem | Quantum FL papers don't use compressed encoders; FL papers don't use VQCs | First identification, naming, and solution |
 | CSA | FL heterogeneity papers study data content, not obs_dim scale | First identification with empirical gradient analysis |
 | PAD | Partial participation proofs assume independent model weights | First analysis of coupled split-encoder partial participation |
 | Quantum FL for VVC | VVC papers use classical RL; quantum RL papers don't federate | First paper combining quantum RL + FL for power systems |
@@ -841,7 +841,7 @@ all_results = trainer.run_all_conditions()
 # Local only baseline
 results_local = trainer.run_local_only()
 
-# Unaligned FL (VQC only — shows QLSI)
+# Unaligned FL (VQC only — shows heterogeneous FL problem)
 results_unaligned = trainer.run_unaligned_fl()
 
 # Aligned FL (SharedHead + VQC — the solution)
@@ -952,7 +952,7 @@ to adapt to provide better-conditioned inputs to the VQC.
 
 This affects all three clients equally. When each client trains its own
 full encoder independently, FedAvg on VQC weights creates an unusable
-policy. This is QLSI. The fix (SharedEncoderHead) is implemented and
+policy. This is heterogeneous FL problem. The fix (SharedEncoderHead) is implemented and
 verified — see ISSUE_001 and SOLUTION_001 documents.
 
 ### 12.5 Partial Participation Summary
@@ -962,7 +962,7 @@ The drop pattern is random per round. Effect on each client:
 
 ```
 13-bus dropped:  SharedHead optimised for 34+123-bus → too complex for 13-bus
-                 When 13-bus rejoins: LocalEncoder misaligned → QLSI for 1 round
+                 When 13-bus rejoins: LocalEncoder misaligned → heterogeneous FL problem for 1 round
                  This resets 13-bus learning progress each time it is dropped
 
 34-bus dropped:  SharedHead optimised for 13+123-bus → extreme size mismatch
@@ -983,8 +983,8 @@ All three patterns produce the same signature: high gradient norms
 
 | Claim | Type of proof | Strength |
 |---|---|---|
-| QLSI exists | Experimental: all 3 clients worse with unaligned FL | Strong |
-| SharedEncoderHead fixes QLSI | Experimental: personalised FL +25–77% | Strong |
+| heterogeneous FL problem exists | Experimental: all 3 clients worse with unaligned FL | Strong |
+| SharedEncoderHead fixes heterogeneous FL problem | Experimental: personalised FL +25–77% | Strong |
 | H3: 395–6920× communication reduction | Mathematical | Very strong |
 | H5: personalised FL beats local-only | Experimental: all 3 clients pass | Strong |
 | CSA exists | Experimental: H1 reversal at 50r vs 200r | Strong |
@@ -1015,9 +1015,9 @@ Step 1 — PROBLEM
 
 Step 2 — FIRST ATTEMPT (fails — this is the interesting part)
   "We apply FedAvg to quantum RL agents. Every client gets WORSE. Why?"
-  → Discovery 1: QLSI — encoder latent spaces are incompatible
+  → Discovery 1: heterogeneous FL problem — encoder latent spaces are incompatible
 
-Step 3 — FIX QLSI
+Step 3 — FIX heterogeneous FL problem
   "We design the SharedEncoderHead. FedAvg now operates on a shared space."
   → Architecture contribution: 280 federated params, 395× less communication
 
@@ -1042,7 +1042,7 @@ Step 7 — CONCLUSION
 ```
 I.   Introduction (1 page)
      - VVC problem + FL motivation
-     - What happens when you naively apply FL to quantum RL (preview of QLSI)
+     - What happens when you naively apply FL to quantum RL (preview of heterogeneous FL problem)
      - Contributions list
 
 II.  Background (1 page)
@@ -1056,12 +1056,12 @@ III. Problem Formulation (0.5 page)
      - Privacy constraint definition
      - Observation space dimensions (42/105/372)
 
-IV.  QLSI — Identification and Analysis (0.75 page)
+IV.  heterogeneous FL problem — Identification and Analysis (0.75 page)
      - Formal definition
      - Experimental evidence (Table: all 3 clients worse)
      - Mathematical explanation (orthogonal latent bases)
 
-V.   SharedEncoderHead Architecture — Solution to QLSI (0.75 page)
+V.   SharedEncoderHead Architecture — Solution to heterogeneous FL problem (0.75 page)
      - Architecture diagram
      - What gets federated vs stays private
      - Communication cost analysis (H3 proof)
@@ -1090,10 +1090,10 @@ References (~20 citations)
 
 ### 14.3 Six Paper Contributions (summary for introduction)
 
-1. **QLSI** — First identification and naming of Quantum Latent Space Incompatibility:
+1. **heterogeneous FL problem** — First identification and naming of Quantum Latent Space Incompatibility:
    naive quantum FL hurts all clients due to incompatible private encoder representations
 
-2. **SharedEncoderHead** — Architecture that fixes QLSI with only 280 federated
+2. **SharedEncoderHead** — Architecture that fixes heterogeneous FL problem with only 280 federated
    parameters (395× less than classical federated SAC)
 
 3. **CSA** — First identification of Client Size Asymmetry: SharedHead convergence
@@ -1105,7 +1105,7 @@ References (~20 citations)
    result does not transfer to coupled split-encoder architectures
 
 5. **Personalised QFL** — Two-phase strategy (FL warm-start + local fine-tune)
-   that bypasses both QLSI and CSA, achieving +25–77% reward improvement on
+   that bypasses both heterogeneous FL problem and CSA, achieving +25–77% reward improvement on
    all clients simultaneously with 395× less communication than classical FL
 
 6. **H3 Communication Proof** — Mathematical demonstration that quantum federated

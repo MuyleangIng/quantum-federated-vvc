@@ -199,7 +199,7 @@ Parameter budget per client:
 ║ Best result  ║ −5.39 reward             ║ −165.0 / −15.2 / −4034.5    ║
 ║              ║ (OpenDSS env)            ║ (+50/+77/+25% vs local)      ║
 ╠══════════════╬══════════════════════════╬══════════════════════════════╣
-║ Novel        ║ QE-SAC works for VVC     ║ QLSI — new quantum FL flaw   ║
+║ Novel        ║ QE-SAC works for VVC     ║ heterogeneous FL problem — new quantum FL flaw   ║
 ║ findings     ║ 185× fewer params        ║ CSA — gradient scale bias    ║
 ║              ║ VQC noise robust         ║ PAD — alignment breaks under ║
 ║              ║                          ║ partial participation        ║
@@ -233,7 +233,7 @@ Parameter budget per client:
 ║  123-bus  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  -5364.4  (local)    ║
 ║           ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ -5420.5  (FL) WORSE ║
 ║                                                                          ║
-║  → DISCOVERY 1: QLSI  (all three clients degraded by federation)        ║
+║  → DISCOVERY 1: heterogeneous FL problem  (all three clients degraded by federation)        ║
 ║                                                                          ║
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║                                                                          ║
@@ -310,13 +310,13 @@ Parameter budget per client:
 ║  policy without sharing raw grid data.                                   ║
 ║                                                                          ║
 ║  ┌──────────────────────────────────────────────────────────────────┐   ║
-║  │  OBJECTIVE 1: Prove that naive quantum FL fails (QLSI)           │   ║
+║  │  OBJECTIVE 1: Prove that naive quantum FL fails (heterogeneous FL problem)           │   ║
 ║  │  Status: ✅  Evidence: all 3 clients worse with unaligned FL      │   ║
 ║  │  Why novel: no FL paper identifies this failure mode              │   ║
 ║  └──────────────────────────────────────────────────────────────────┘   ║
 ║                                                                          ║
 ║  ┌──────────────────────────────────────────────────────────────────┐   ║
-║  │  OBJECTIVE 2: Solve QLSI with minimal communication overhead     │   ║
+║  │  OBJECTIVE 2: Solve heterogeneous FL problem with minimal communication overhead     │   ║
 ║  │  Status: ✅  Solution: SharedEncoderHead (280 params federated)   │   ║
 ║  │  Result:  395× less communication than classical federated SAC    │   ║
 ║  └──────────────────────────────────────────────────────────────────┘   ║
@@ -357,7 +357,7 @@ Parameter budget per client:
 ║  PRESENT  ────────────────────────────────────────────────────────────  ║
 ║                                                                          ║
 ║  QE-SAC-FL (this work — federated learning)                             ║
-║    ✅ QLSI discovered and named                                          ║
+║    ✅ heterogeneous FL problem discovered and named                                          ║
 ║    ✅ CSA discovered and named                                           ║
 ║    ✅ PAD discovered and named                                           ║
 ║    ✅ SharedEncoderHead architecture built and verified                  ║
@@ -393,11 +393,11 @@ Parameter budget per client:
 ║  E1: Local only       ║  3 clients,  ║  Baseline. Each client's best    ║
 ║                       ║  no FL       ║  result without any cooperation. ║
 ╠═══════════════════════╬══════════════╬══════════════════════════════════╣
-║  E2: Unaligned FL     ║  FedAvg on   ║  QLSI exists. Standard quantum   ║
+║  E2: Unaligned FL     ║  FedAvg on   ║  heterogeneous FL problem exists. Standard quantum   ║
 ║                       ║  VQC only    ║  FL hurts all 3 clients.         ║
 ║                       ║              ║  This is NEW — no paper found it ║
 ╠═══════════════════════╬══════════════╬══════════════════════════════════╣
-║  E3: Aligned FL 50r   ║  FedAvg on   ║  QLSI is fixed. Small feeder    ║
+║  E3: Aligned FL 50r   ║  FedAvg on   ║  heterogeneous FL problem is fixed. Small feeder    ║
 ║                       ║  SharedHead  ║  benefits first (CSA early).     ║
 ║                       ║  + VQC       ║  Only 13-bus passes H1.          ║
 ╠═══════════════════════╬══════════════╬══════════════════════════════════╣
@@ -411,7 +411,7 @@ Parameter budget per client:
 ╠═══════════════════════╬══════════════╬══════════════════════════════════╣
 ║  E6: Personalised FL  ║  50r aligned ║  SOLUTION. All 3 clients better. ║
 ║                       ║  + 5K local  ║  +50/+77/+25%. Main result.      ║
-║                       ║  fine-tune   ║  Bypasses both QLSI and CSA.     ║
+║                       ║  fine-tune   ║  Bypasses both heterogeneous FL problem and CSA.     ║
 ╠═══════════════════════╬══════════════╬══════════════════════════════════╣
 ║  H3: Comm cost        ║  Param count ║  395× less than classical FL.    ║
 ║  (mathematical)       ║  × bytes     ║  Mathematical proof. Always true ║
@@ -435,7 +435,7 @@ Parameter budget per client:
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  Li 2020           FedProx adds prox       They fix data heterogeneity   ║
 ║  (FedProx)         term for non-IID        We fix encoder incompatibility ║
-║                    data distributions      → QLSI ≠ FedProx problem      ║
+║                    data distributions      → heterogeneous FL problem ≠ FedProx problem      ║
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  Karimireddy 2020  SCAFFOLD fixes          They fix gradient variance    ║
 ║  (SCAFFOLD)        gradient drift          from DATA, not from obs_dim   ║
@@ -473,7 +473,7 @@ Parameter budget per client:
 ║   WHY DID IT FAIL?                                                       ║
 ║   Each company's encoder learned to compress observations in its        ║
 ║   own way. After averaging, the quantum circuit received nonsense.      ║
-║   We named this: Quantum Latent Space Incompatibility (QLSI).           ║
+║   We named this: Quantum Latent Space Incompatibility (heterogeneous FL problem).           ║
 ║                                                                          ║
 ║   HOW DID WE FIX IT?                                                     ║
 ║   We split the encoder into a private part (stays local) and a         ║

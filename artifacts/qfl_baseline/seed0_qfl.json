@@ -1,0 +1,1060 @@
+{
+  "condition": "qfl_baseline",
+  "seed": 0,
+  "n_rounds": 50,
+  "local_steps": 1000,
+  "wall_time_seconds": 3324.6016426086426,
+  "bytes_communicated": 336000,
+  "logs": [
+    {
+      "client": "Utility_A_13bus",
+      "round": 0,
+      "reward": -14.508589914070281,
+      "vqc_grad_norm": 0.2301097810268402,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 0,
+      "reward": -3.65851608771179,
+      "vqc_grad_norm": 0.5244638323783875,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 0,
+      "reward": -0.08759712409210052,
+      "vqc_grad_norm": 0.8542657494544983,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 1,
+      "reward": -14.417127582358697,
+      "vqc_grad_norm": 0.5995424389839172,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 1,
+      "reward": -3.6338228072726277,
+      "vqc_grad_norm": 0.38629645109176636,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 1,
+      "reward": -0.09544021386691878,
+      "vqc_grad_norm": 0.22729918360710144,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 2,
+      "reward": -14.518854179689075,
+      "vqc_grad_norm": 0.17787688970565796,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 2,
+      "reward": -3.5708545501048867,
+      "vqc_grad_norm": 0.1925450563430786,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 2,
+      "reward": -0.09429499564925094,
+      "vqc_grad_norm": 0.24738241732120514,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 3,
+      "reward": -14.546840782835897,
+      "vqc_grad_norm": 0.12614159286022186,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 3,
+      "reward": -3.4582649448822154,
+      "vqc_grad_norm": 0.2176724076271057,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 3,
+      "reward": -0.09399250603778671,
+      "vqc_grad_norm": 0.08760285377502441,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 4,
+      "reward": -14.593279671457605,
+      "vqc_grad_norm": 0.16460348665714264,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 4,
+      "reward": -3.4349264307685,
+      "vqc_grad_norm": 0.2741856575012207,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 4,
+      "reward": -0.09365690183214201,
+      "vqc_grad_norm": 0.255937397480011,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 5,
+      "reward": -14.536634890769292,
+      "vqc_grad_norm": 0.2942085862159729,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 5,
+      "reward": -3.410345380937199,
+      "vqc_grad_norm": 0.20317918062210083,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 5,
+      "reward": -0.09355150515544677,
+      "vqc_grad_norm": 0.4167860150337219,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 6,
+      "reward": -14.458959758829808,
+      "vqc_grad_norm": 0.2536737620830536,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 6,
+      "reward": -3.318411427202746,
+      "vqc_grad_norm": 0.21375490725040436,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 6,
+      "reward": -0.09181178353641015,
+      "vqc_grad_norm": 0.481794148683548,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 7,
+      "reward": -14.692548822983806,
+      "vqc_grad_norm": 0.1488383412361145,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 7,
+      "reward": -3.2382494567692883,
+      "vqc_grad_norm": 0.3918192982673645,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 7,
+      "reward": -0.09397160780227465,
+      "vqc_grad_norm": 0.33867156505584717,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 8,
+      "reward": -14.307283452768564,
+      "vqc_grad_norm": 0.17185856401920319,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 8,
+      "reward": -3.1560124164502787,
+      "vqc_grad_norm": 0.5954611897468567,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 8,
+      "reward": -0.09616040885969605,
+      "vqc_grad_norm": 0.26771387457847595,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 9,
+      "reward": -14.53061473121053,
+      "vqc_grad_norm": 0.13086707890033722,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 9,
+      "reward": -3.233324970888691,
+      "vqc_grad_norm": 0.5181790590286255,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 9,
+      "reward": -0.09276071895742835,
+      "vqc_grad_norm": 0.4449433386325836,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 10,
+      "reward": -14.472435528185352,
+      "vqc_grad_norm": 0.09705806523561478,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 10,
+      "reward": -3.1137335493236367,
+      "vqc_grad_norm": 0.5452926754951477,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 10,
+      "reward": -0.09314393522369217,
+      "vqc_grad_norm": 0.20926061272621155,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 11,
+      "reward": -14.51372209516359,
+      "vqc_grad_norm": 0.11530528962612152,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 11,
+      "reward": -3.1406806948485553,
+      "vqc_grad_norm": 0.3584040105342865,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 11,
+      "reward": -0.09513228594541011,
+      "vqc_grad_norm": 0.14890292286872864,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 12,
+      "reward": -14.409666952410939,
+      "vqc_grad_norm": 0.2258944809436798,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 12,
+      "reward": -3.0218598883468437,
+      "vqc_grad_norm": 0.531699538230896,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 12,
+      "reward": -0.09416703979307248,
+      "vqc_grad_norm": 0.4425407946109772,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 13,
+      "reward": -14.504710772391755,
+      "vqc_grad_norm": 0.2136322557926178,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 13,
+      "reward": -2.9832072123698716,
+      "vqc_grad_norm": 0.22092697024345398,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 13,
+      "reward": -0.09241596067977954,
+      "vqc_grad_norm": 0.2740383744239807,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 14,
+      "reward": -14.508553429474183,
+      "vqc_grad_norm": 0.1276971995830536,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 14,
+      "reward": -2.947826580441571,
+      "vqc_grad_norm": 0.40177038311958313,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 14,
+      "reward": -0.09304410700345418,
+      "vqc_grad_norm": 0.5025268197059631,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 15,
+      "reward": -14.54939698768916,
+      "vqc_grad_norm": 0.17389845848083496,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 15,
+      "reward": -2.939833303674553,
+      "vqc_grad_norm": 0.7154048681259155,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 15,
+      "reward": -0.09353927547638895,
+      "vqc_grad_norm": 0.8490625023841858,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 16,
+      "reward": -14.573444958494017,
+      "vqc_grad_norm": 0.13955047726631165,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 16,
+      "reward": -2.92756840593313,
+      "vqc_grad_norm": 0.24386842548847198,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 16,
+      "reward": -0.09333660974787082,
+      "vqc_grad_norm": 0.29838335514068604,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 17,
+      "reward": -14.468796160387901,
+      "vqc_grad_norm": 0.09222199767827988,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 17,
+      "reward": -2.7854970387875393,
+      "vqc_grad_norm": 0.9065102934837341,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 17,
+      "reward": -0.09425559757034051,
+      "vqc_grad_norm": 0.37671390175819397,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 18,
+      "reward": -14.479967988149548,
+      "vqc_grad_norm": 0.1598692387342453,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 18,
+      "reward": -2.7507396047238872,
+      "vqc_grad_norm": 0.30721157789230347,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 18,
+      "reward": -0.09274344225495276,
+      "vqc_grad_norm": 0.4201257526874542,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 19,
+      "reward": -14.361178276666124,
+      "vqc_grad_norm": 0.1457269787788391,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 19,
+      "reward": -2.7877601778270193,
+      "vqc_grad_norm": 0.6684241890907288,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 19,
+      "reward": -0.09238312711738203,
+      "vqc_grad_norm": 0.4816504716873169,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 20,
+      "reward": -14.36915165951632,
+      "vqc_grad_norm": 0.11137835681438446,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 20,
+      "reward": -2.7302704080891464,
+      "vqc_grad_norm": 0.2752041220664978,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 20,
+      "reward": -0.09523305533238378,
+      "vqc_grad_norm": 0.333229124546051,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 21,
+      "reward": -14.597804674924756,
+      "vqc_grad_norm": 0.1523863673210144,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 21,
+      "reward": -2.6802542017790523,
+      "vqc_grad_norm": 0.33048808574676514,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 21,
+      "reward": -0.09401112561110533,
+      "vqc_grad_norm": 0.7094732522964478,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 22,
+      "reward": -14.513638133582875,
+      "vqc_grad_norm": 0.3532506823539734,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 22,
+      "reward": -2.625011781799521,
+      "vqc_grad_norm": 0.3903729319572449,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 22,
+      "reward": -0.09209269176187482,
+      "vqc_grad_norm": 0.908762514591217,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 23,
+      "reward": -14.502649094896721,
+      "vqc_grad_norm": 0.15421807765960693,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 23,
+      "reward": -2.650215868985722,
+      "vqc_grad_norm": 0.5576099157333374,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 23,
+      "reward": -0.09181278892041403,
+      "vqc_grad_norm": 0.7778335213661194,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 24,
+      "reward": -14.523648657151895,
+      "vqc_grad_norm": 0.12071868032217026,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 24,
+      "reward": -2.5140271191469767,
+      "vqc_grad_norm": 0.2422267198562622,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 24,
+      "reward": -0.09283053803883715,
+      "vqc_grad_norm": 0.20598500967025757,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 25,
+      "reward": -14.454409037295255,
+      "vqc_grad_norm": 0.09092013537883759,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 25,
+      "reward": -2.6894657949316736,
+      "vqc_grad_norm": 0.8546943068504333,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 25,
+      "reward": -0.09261650109286565,
+      "vqc_grad_norm": 0.6803728938102722,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 26,
+      "reward": -14.385914879501874,
+      "vqc_grad_norm": 0.1536037176847458,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 26,
+      "reward": -2.5639019394425198,
+      "vqc_grad_norm": 0.3948751986026764,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 26,
+      "reward": -0.09202120796215604,
+      "vqc_grad_norm": 0.417998343706131,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 27,
+      "reward": -14.301034127824137,
+      "vqc_grad_norm": 0.21794913709163666,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 27,
+      "reward": -2.441175988743783,
+      "vqc_grad_norm": 0.39905938506126404,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 27,
+      "reward": -0.09412846307165845,
+      "vqc_grad_norm": 0.2848782539367676,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 28,
+      "reward": -14.402938103624892,
+      "vqc_grad_norm": 0.23537622392177582,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 28,
+      "reward": -2.639095512291457,
+      "vqc_grad_norm": 0.25592392683029175,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 28,
+      "reward": -0.0926130786550065,
+      "vqc_grad_norm": 0.49724912643432617,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 29,
+      "reward": -14.461703908315902,
+      "vqc_grad_norm": 0.15775489807128906,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 29,
+      "reward": -2.5629089815495614,
+      "vqc_grad_norm": 0.29509055614471436,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 29,
+      "reward": -0.09246282222440066,
+      "vqc_grad_norm": 0.5403685569763184,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 30,
+      "reward": -14.405514852351281,
+      "vqc_grad_norm": 0.15375173091888428,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 30,
+      "reward": -2.4309559713235736,
+      "vqc_grad_norm": 0.44450071454048157,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 30,
+      "reward": -0.09331669921238406,
+      "vqc_grad_norm": 0.22166655957698822,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 31,
+      "reward": -14.621290512753257,
+      "vqc_grad_norm": 0.35446691513061523,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 31,
+      "reward": -2.5173801077429365,
+      "vqc_grad_norm": 0.1960626095533371,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 31,
+      "reward": -0.09291200202565504,
+      "vqc_grad_norm": 0.36164385080337524,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 32,
+      "reward": -14.467655494946614,
+      "vqc_grad_norm": 0.18651048839092255,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 32,
+      "reward": -2.3454063356084647,
+      "vqc_grad_norm": 0.3309785723686218,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 32,
+      "reward": -0.09233851631159545,
+      "vqc_grad_norm": 0.5985873937606812,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 33,
+      "reward": -14.600157375811042,
+      "vqc_grad_norm": 0.17732876539230347,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 33,
+      "reward": -2.3143625574654494,
+      "vqc_grad_norm": 0.3272610604763031,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 33,
+      "reward": -0.09454875869840096,
+      "vqc_grad_norm": 0.41889116168022156,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 34,
+      "reward": -14.359120702629744,
+      "vqc_grad_norm": 0.286304771900177,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 34,
+      "reward": -2.365521299611139,
+      "vqc_grad_norm": 0.2744750678539276,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 34,
+      "reward": -0.09400830817174749,
+      "vqc_grad_norm": 0.27147743105888367,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 35,
+      "reward": -14.321959441354082,
+      "vqc_grad_norm": 0.07345038652420044,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 35,
+      "reward": -2.3190889579414735,
+      "vqc_grad_norm": 0.3140610158443451,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 35,
+      "reward": -0.0922904104699658,
+      "vqc_grad_norm": 0.4854118824005127,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 36,
+      "reward": -14.379000354760976,
+      "vqc_grad_norm": 0.2243625819683075,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 36,
+      "reward": -2.223905228251544,
+      "vqc_grad_norm": 0.47008079290390015,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 36,
+      "reward": -0.09378685934385521,
+      "vqc_grad_norm": 0.2476702630519867,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 37,
+      "reward": -14.535642345843277,
+      "vqc_grad_norm": 0.20049269497394562,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 37,
+      "reward": -2.214216522771391,
+      "vqc_grad_norm": 0.43143847584724426,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 37,
+      "reward": -0.09434526508492966,
+      "vqc_grad_norm": 0.3261968493461609,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 38,
+      "reward": -14.473922677480521,
+      "vqc_grad_norm": 0.17557992041110992,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 38,
+      "reward": -2.11221896772454,
+      "vqc_grad_norm": 0.36095771193504333,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 38,
+      "reward": -0.09384829989117371,
+      "vqc_grad_norm": 0.39681345224380493,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 39,
+      "reward": -14.358916377273427,
+      "vqc_grad_norm": 0.09884882718324661,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 39,
+      "reward": -2.147340093590708,
+      "vqc_grad_norm": 0.2621367573738098,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 39,
+      "reward": -0.09220751566148395,
+      "vqc_grad_norm": 0.5350002646446228,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 40,
+      "reward": -14.650684261567744,
+      "vqc_grad_norm": 0.26664572954177856,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 40,
+      "reward": -2.0389095069064913,
+      "vqc_grad_norm": 0.4994851052761078,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 40,
+      "reward": -0.0919068585751855,
+      "vqc_grad_norm": 0.3833255171775818,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 41,
+      "reward": -14.415838488691875,
+      "vqc_grad_norm": 0.15796999633312225,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 41,
+      "reward": -2.112506106477417,
+      "vqc_grad_norm": 0.33407142758369446,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 41,
+      "reward": -0.09204802518580074,
+      "vqc_grad_norm": 0.5569964647293091,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 42,
+      "reward": -14.47812237490364,
+      "vqc_grad_norm": 0.31106847524642944,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 42,
+      "reward": -2.1543614905314104,
+      "vqc_grad_norm": 0.34610122442245483,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 42,
+      "reward": -0.09109414706096097,
+      "vqc_grad_norm": 0.6063281297683716,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 43,
+      "reward": -14.372927470588463,
+      "vqc_grad_norm": 0.18415287137031555,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 43,
+      "reward": -2.0723307201516286,
+      "vqc_grad_norm": 0.4029335677623749,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 43,
+      "reward": -0.09173189856538978,
+      "vqc_grad_norm": 0.5493861436843872,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 44,
+      "reward": -14.411238711936132,
+      "vqc_grad_norm": 0.31723552942276,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 44,
+      "reward": -2.049239928170601,
+      "vqc_grad_norm": 0.42131131887435913,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 44,
+      "reward": -0.0913544269306497,
+      "vqc_grad_norm": 0.1825374811887741,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 45,
+      "reward": -14.413831211644554,
+      "vqc_grad_norm": 0.14874450862407684,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 45,
+      "reward": -1.960026960313645,
+      "vqc_grad_norm": 0.29111939668655396,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 45,
+      "reward": -0.0887975581056709,
+      "vqc_grad_norm": 0.349014550447464,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 46,
+      "reward": -14.260956501159868,
+      "vqc_grad_norm": 0.21279850602149963,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 46,
+      "reward": -1.9894118582762321,
+      "vqc_grad_norm": 0.24529138207435608,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 46,
+      "reward": -0.09222553482649129,
+      "vqc_grad_norm": 0.6655630469322205,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 47,
+      "reward": -14.544156187356831,
+      "vqc_grad_norm": 0.279133141040802,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 47,
+      "reward": -1.828854756469999,
+      "vqc_grad_norm": 0.1650342494249344,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 47,
+      "reward": -0.09095253225132434,
+      "vqc_grad_norm": 0.3205627501010895,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 48,
+      "reward": -14.367198784018646,
+      "vqc_grad_norm": 0.17828592658042908,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 48,
+      "reward": -1.9129600141595142,
+      "vqc_grad_norm": 0.23747719824314117,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 48,
+      "reward": -0.09223647875006058,
+      "vqc_grad_norm": 0.17310313880443573,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_A_13bus",
+      "round": 49,
+      "reward": -14.420059018858703,
+      "vqc_grad_norm": 0.14816035330295563,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_B_34bus",
+      "round": 49,
+      "reward": -1.8972802693203321,
+      "vqc_grad_norm": 0.34840965270996094,
+      "steps": 1000
+    },
+    {
+      "client": "Utility_C_123bus",
+      "round": 49,
+      "reward": -0.08962233375569177,
+      "vqc_grad_norm": 0.4559389054775238,
+      "steps": 1000
+    }
+  ]
+}

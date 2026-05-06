@@ -26,11 +26,11 @@ to a newly identified structural problem.
 
 ---
 
-## Novel Problem 1: Quantum Latent Space Incompatibility (QLSI)
+## Novel Problem 1: Quantum Latent Space Incompatibility (heterogeneous FL problem)
 
 We discovered that naively applying FedAvg to quantum RL agents causes all
 clients to perform WORSE than training locally. We name this **Quantum Latent
-Space Incompatibility (QLSI)**.
+Space Incompatibility (heterogeneous FL problem)**.
 
 **Root cause:** Each client's private autoencoder independently learns to compress
 its feeder state into 8 numbers (the VQC input). These 8 dimensions mean completely
@@ -45,7 +45,7 @@ different things per client. After FedAvg, the averaged VQC operates in a meanin
 | 34-bus | −65.5 | −69.6 | −4.1 (WORSE) |
 | 123-bus | −5364.4 | −5420.5 | −56.1 (WORSE) |
 
-No existing paper has identified, named, or solved QLSI.
+No existing paper has identified, named, or solved heterogeneous FL problem.
 
 ---
 
@@ -55,7 +55,7 @@ A second novel problem arises when not all clients participate each round.
 We call this **Partial Alignment Drift (PAD)**.
 
 When clients rotate in/out of FL rounds, the SharedEncoderHead oscillates
-between incompatible 2-client objectives, reintroducing QLSI for absent clients.
+between incompatible 2-client objectives, reintroducing heterogeneous FL problem for absent clients.
 Classical FL is robust to partial participation (McMahan 2017); quantum FL is not.
 
 **Experimental confirmation (2/3 clients per round):**
@@ -78,7 +78,7 @@ obs → LocalEncoder (private, obs→32) → SharedEncoderHead (federated, 32→
 
 Only SharedEncoderHead + VQC are federated. All clients share the same
 SharedHead architecture — FedAvg forces all clients into the same 8-dim
-latent space, fixing QLSI. **Total federated: 288 params = 395× less than
+latent space, fixing heterogeneous FL problem. **Total federated: 288 params = 395× less than
 federating a classical SAC actor.**
 
 ---
@@ -136,7 +136,7 @@ adapt the shared head to its own size, making the round-selection problem irrele
 
 ## Six Research Contributions
 
-1. **QLSI** — First identification of Quantum Latent Space Incompatibility:
+1. **heterogeneous FL problem** — First identification of Quantum Latent Space Incompatibility:
    naive quantum FL hurts all clients due to incompatible private encoders
 
 2. **CSA** — First identification of Client Size Asymmetry: SharedHead
@@ -146,10 +146,10 @@ adapt the shared head to its own size, making the round-selection problem irrele
 3. **PAD** — First identification of Partial Alignment Drift: quantum FL
    uniquely requires full participation; classical FL robustness does not transfer
 
-4. **SharedEncoderHead** — Architecture that fixes QLSI with only 288
+4. **SharedEncoderHead** — Architecture that fixes heterogeneous FL problem with only 288
    federated params (395× less than classical SAC FL)
 
-5. **Personalised QFL** — Two-phase strategy bypassing both QLSI and CSA,
+5. **Personalised QFL** — Two-phase strategy bypassing both heterogeneous FL problem and CSA,
    achieving +25–77% reward improvement on all clients simultaneously
 
 6. **H3 Proof** — Mathematical proof of 395–6920× communication reduction

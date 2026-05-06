@@ -1,0 +1,37 @@
+{
+  "paper": {
+    "n_params": 16,
+    "mean_final_reward": -14.474970232748259,
+    "std_final_reward": 0.04195287513564505,
+    "mean_final_grad_norm": 0.0009730688645504415,
+    "barren_plateau": true
+  },
+  "ring": {
+    "n_params": 16,
+    "mean_final_reward": -14.47102806553347,
+    "std_final_reward": 0.022404120512561576,
+    "mean_final_grad_norm": 0.0010403017433418427,
+    "barren_plateau": false
+  },
+  "no_ent": {
+    "n_params": 16,
+    "mean_final_reward": -14.466528989704463,
+    "std_final_reward": 0.029584953291205807,
+    "mean_final_grad_norm": 0.0012100858337362296,
+    "barren_plateau": false
+  },
+  "deep": {
+    "n_params": 32,
+    "mean_final_reward": -14.479682291064238,
+    "std_final_reward": 0.05029422944389417,
+    "mean_final_grad_norm": 0.002066205386654474,
+    "barren_plateau": false
+  },
+  "sel": {
+    "n_params": 48,
+    "mean_final_reward": -14.468159268970549,
+    "std_final_reward": 0.04233183530566098,
+    "mean_final_grad_norm": 0.0033727004833053794,
+    "barren_plateau": false
+  }
+}

@@ -57,7 +57,7 @@ RESULT:                         VQC outputs random-looking action distributions
 This is NOT the same as classical FL client drift (caused by non-IID data).
 It is a structural problem unique to quantum FL with private encoders.
 
-**Name:** Quantum Latent Space Incompatibility (QLSI)
+**Name:** Quantum Latent Space Incompatibility (heterogeneous FL problem)
 
 ---
 
@@ -71,7 +71,7 @@ Local-only:   -82    -87    -83    -81    -67   (improving)
 QE-SAC-FL:    -75    -97   -104    -74    -75   (dips then recovers)
 ```
 
-The dip at rounds 1–2 is the signature of QLSI: loading the aggregated VQC
+The dip at rounds 1–2 is the signature of heterogeneous FL problem: loading the aggregated VQC
 from round 0 immediately degrades performance before local training partially
 recovers it.
 
@@ -100,8 +100,8 @@ Classical federated learning drift (FedProx, Scaffold, etc.) addresses:
 - Non-IID data distributions across clients
 - Model weight divergence due to heterogeneous local objectives
 
-QLSI is different:
-- Even with identical data distributions, QLSI would still occur
+heterogeneous FL problem is different:
+- Even with identical data distributions, heterogeneous FL problem would still occur
 - The problem is the private encoder creating incompatible INPUT SPACES to the VQC
 - Standard FL fixes (FedProx, momentum correction) do not address this
 
@@ -114,8 +114,8 @@ No paper has identified or named this problem.
 **Positive reframe:** The failure of unaligned federation IS the finding.
 The paper now has two contributions instead of one:
 
-1. **Identify QLSI** — first paper to name and characterise this problem
-2. **Solve QLSI** — propose SharedEncoderHead architecture (SOLUTION_001)
+1. **Identify heterogeneous FL problem** — first paper to name and characterise this problem
+2. **Solve heterogeneous FL problem** — propose SharedEncoderHead architecture (SOLUTION_001)
 
 A paper that finds a new problem AND solves it is stronger than one that
 just shows a method works.

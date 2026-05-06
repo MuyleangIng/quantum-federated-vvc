@@ -14,7 +14,7 @@
                         13-bus      34-bus     123-bus
 ────────────────────────────────────────────────────────
 Local only             -331.4       -65.5     -5364.4
-Unaligned FL           -336.6       -69.6     -5420.5   ← QLSI: all worse
+Unaligned FL           -336.6       -69.6     -5420.5   ← heterogeneous FL problem: all worse
 Aligned FL (50r)       -326.3       -85.0     -5402.5   ← 13-bus pass only
 Aligned FL (200r)      -339.5       -69.3     -5251.4   ← 123-bus pass, 13-bus regresses (CSA)
 Partial FL (2/3)       -341.4       -79.8     -5402.9   ← PAD: all worse
@@ -86,7 +86,7 @@ Federated Classical SAC     110,724    2,657,376    132,868,800        1.0× (ba
 
 ## 5. Novel Discoveries
 
-### Discovery 1: Quantum Latent Space Incompatibility (QLSI) — ISSUE_001
+### Discovery 1: Quantum Latent Space Incompatibility (heterogeneous FL problem) — ISSUE_001
 The first paper to name and characterise this structural failure mode of
 quantum federated RL. Unaligned FL hurts ALL clients by creating a VQC
 that operates in an averaged latent space incompatible with every client.
@@ -111,7 +111,7 @@ sizes optimally. Only personalised FL (H5) bypasses this.
 ### Discovery 3: Partial Alignment Drift (PAD) — ISSUE_003
 A new failure mode distinct from classical FL partial participation
 degradation. When clients rotate in/out of FL rounds, the SharedHead
-oscillates between incompatible 2-client objectives, reintroducing QLSI.
+oscillates between incompatible 2-client objectives, reintroducing heterogeneous FL problem.
 
 **Evidence:** Partial FL (2/3 clients) worse than local-only on all clients,
 despite classical FL being robust to same dropout rate.
@@ -129,10 +129,10 @@ over local-only on all clients. The FL warm-start is the critical ingredient.
 Volt-VAR Control: Identifying and Solving Quantum Latent Space Incompatibility"
 
 **Contributions:**
-1. **QLSI** — first identification and naming of this structural quantum FL problem
-2. **Aligned Federation (SOLUTION_001)** — SharedEncoderHead architecture that fixes QLSI
+1. **heterogeneous FL problem** — first identification and naming of this structural quantum FL problem
+2. **Aligned Federation (SOLUTION_001)** — SharedEncoderHead architecture that fixes heterogeneous FL problem
 3. **CSA** — SharedHead convergence favours different client sizes at different rounds
-4. **PAD** — partial participation reintroduces QLSI (new, distinct from classical FL dropout)
+4. **PAD** — partial participation reintroduces heterogeneous FL problem (new, distinct from classical FL dropout)
 5. **Personalised QFL** — two-phase strategy achieving +25–77% improvement with 395× less communication
 6. **H3** — mathematical proof of communication advantage (395–6920× vs classical FL)
 

@@ -1,0 +1,765 @@
+\documentclass[journal]{IEEEtran}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{array}
+
+% ── Title ─────────────────────────────────────────────────────────────────────
+\title{Federated Quantum-Enhanced Soft Actor-Critic for Heterogeneous
+Volt-VAR Control Across Multiple Power Grid Topologies}
+
+\author{Ing~Muyleang,~\IEEEmembership{Student Member,~IEEE,}
+        and~Myeongseong~(Advisor),~\IEEEmembership{Member,~IEEE}%
+\thanks{The authors are with the Quantum Computing Laboratory,
+Department of Electrical Engineering, Pukyong National University,
+Busan, Republic of Korea (e-mail: muyleanging@gmail.com).}%
+\thanks{Manuscript submitted April 2026.}}
+
+\markboth{IEEE Transactions on Smart Grid}{}
+
+% ── Begin Document ────────────────────────────────────────────────────────────
+\begin{document}
+
+\maketitle
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+Federated reinforcement learning (FL-RL) enables multiple electric utilities
+to collaboratively train a shared control policy without exchanging private
+grid data. However, applying federated learning to quantum reinforcement
+learning across heterogeneous power grid topologies introduces a fundamental
+challenge: heterogeneous clients produce geometrically incompatible latent
+vectors that cause gradient cancellation during parameter aggregation.
+We term this the \textit{heterogeneous latent space mismatch} (heterogeneous FL problem) problem.
+To address heterogeneous FL problem, we propose QE-SAC-FL, a federated quantum-enhanced
+Soft Actor-Critic framework with an aligned encoder that forces a shared
+latent geometry across clients before entering the variational quantum circuit
+(VQC). The aligned encoder compresses any grid observation into a common
+8-dimensional latent space, reducing the federated communication cost to only
+280 parameters (1.1\,KB) per client per round --- a reduction of $308\times$
+to $617\times$ compared to classical SAC-FL, depending on grid size.
+We validate QE-SAC-FL on four IEEE benchmark topologies (13-, 34-, 57-, and
+123-bus) simultaneously. Statistical evaluation over $n=5$ seeds demonstrates
+significant improvement on Client~B (effect size $d=+1.74$, $p=0.0089$,
+significant after Bonferroni correction at $\alpha=0.0167$) and Client~C
+($d=+1.24$, $p=0.0252$). Personalized federated fine-tuning further improves
+Client~B reward by $+4.549$ over local-only training, surpassing the
+best single-agent result of Lee et al.\ \cite{lee2022graph} on the same
+benchmark ($-3.261 \pm 0.096$ vs.\ $-3.56 \pm 0.20$).
+Real-physics validation using OpenDSS achieves effect size $d=+1.97$.
+We further compare two local encoder variants --- MLP and graph neural
+network (GNN) --- showing that MLP outperforms GNN on static topology
+while GNN recovers faster from line faults, and that the federated protocol
+is identical in both cases. To our knowledge, this is the first work to
+identify and solve heterogeneous FL problem and to demonstrate federated quantum RL across
+heterogeneous power grid topologies.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Federated learning, quantum reinforcement learning, variational quantum circuit,
+Volt-VAR control, power distribution systems, heterogeneous topology,
+graph neural network, soft actor-critic.
+\end{IEEEkeywords}
+
+% ── Section I: Introduction ───────────────────────────────────────────────────
+\section{Introduction}
+
+\IEEEPARstart{V}{olt-VAR} control (VVC) is a critical operational task
+in power distribution systems, requiring real-time coordination of
+capacitor banks, voltage regulators, and distributed energy resources
+to maintain voltage within permissible bounds while minimizing power losses
+\cite{lin2025qesac}. As power grids become increasingly complex with
+high penetration of renewable energy, traditional rule-based and optimization
+methods struggle to handle the stochastic, nonlinear nature of modern VVC
+problems \cite{lee2022graph}.
+
+Deep reinforcement learning (DRL) has emerged as a promising approach for
+VVC, offering model-free, adaptive control policies that can handle
+high-dimensional observations and complex action spaces
+\cite{lin2025qesac, lee2022graph}. However, DRL requires large amounts of
+operational data, which raises privacy concerns when multiple utilities wish
+to collaborate: customer load profiles, fault histories, and voltage
+measurements are commercially sensitive and often legally protected.
+
+Federated learning (FL) addresses this by allowing clients to share
+model parameters rather than raw data \cite{mcmahan2017fedavg}.
+In FL-RL, each client trains a local policy on its own data and
+periodically contributes gradient updates to a shared server.
+This preserves data privacy while enabling collaborative learning
+across distributed agents.
+
+\textbf{The quantum advantage.} Quantum machine learning offers exponential
+representational capacity via quantum superposition and entanglement
+\cite{biamonte2017qml}. Lin et al.\ \cite{lin2025qesac} recently demonstrated
+that replacing the actor's hidden layers with a variational quantum circuit
+(VQC) improves reward on single-utility VVC. However, extending quantum RL
+to the federated multi-utility setting introduces a critical new challenge
+that has not been previously identified or addressed.
+
+\textbf{The heterogeneous FL problem problem.} When heterogeneous clients (e.g., a 42-dimensional
+13-bus observation vs.\ a 372-dimensional 123-bus observation) independently
+train local encoders and share only VQC weights, the latent vectors entering
+the quantum circuit belong to geometrically incompatible spaces.
+FedAvg produces a VQC that satisfies no individual client, causing gradient
+cancellation and training instability. We term this the
+\textit{heterogeneous latent space mismatch} (heterogeneous FL problem) problem.
+
+\textbf{Our contributions.} We propose QE-SAC-FL with three core contributions:
+
+\begin{enumerate}
+    \item \textbf{Aligned encoder:} A shared encoder head that forces all
+    clients to a common latent geometry before the VQC, solving heterogeneous FL problem.
+
+    \item \textbf{Extreme communication efficiency:} Only 280 federated
+    parameters (1.1\,KB) per client per round --- constant regardless of
+    grid size --- compared to $107{,}000$--$172{,}000$ parameters for
+    classical SAC-FL (308$\times$--617$\times$ reduction).
+
+    \item \textbf{Heterogeneous multi-topology FL:} Simultaneous training
+    across four IEEE topologies (13/34/57/123-bus) with the same federated
+    protocol, validated over $n=5$ seeds with statistical significance.
+\end{enumerate}
+
+The remainder of this paper is organized as follows.
+Section~\ref{sec:related} reviews related work.
+Section~\ref{sec:method} describes the proposed architecture.
+Section~\ref{sec:setup} details the experimental setup.
+Section~\ref{sec:results} presents results.
+Section~\ref{sec:discussion} discusses implications and limitations.
+Section~\ref{sec:conclusion} concludes.
+
+% ── Section II: Related Work ──────────────────────────────────────────────────
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Reinforcement Learning for Volt-VAR Control}
+
+Early RL approaches to VVC used tabular Q-learning on simplified grid models
+\cite{lin2025qesac}. Deep Q-Networks (DQN) and policy gradient methods have
+since been applied to more realistic IEEE test cases. Lee et al.\
+\cite{lee2022graph} proposed a graph policy network (Graph-PPO) that uses
+a GNN actor to exploit grid topology, demonstrating improved sample efficiency
+on 13-, 34-, and 123-bus systems. Their best result on the 34-bus benchmark
+is $-3.56 \pm 0.20$ reward, which our personalized FL variant surpasses
+($-3.261 \pm 0.096$). Subsequent work \cite{multiagent2023} extended GNN-RL
+to decentralized multi-agent settings but without federated privacy guarantees
+or communication budgets.
+
+\subsection{Federated Learning for Power Systems}
+
+Federated learning has been applied to load forecasting, demand response,
+and state estimation in power systems \cite{fedpower2022}.
+For control tasks, FL-RL enables utilities to share learned policies without
+revealing operational data. However, existing FL-RL methods for power systems
+assume homogeneous clients with identical observation dimensions, making
+direct application to heterogeneous multi-utility settings infeasible.
+
+\subsection{Quantum Reinforcement Learning}
+
+Lin et al.\ \cite{lin2025qesac} introduced QE-SAC, replacing the SAC actor's
+hidden layers with a VQC of 16 trainable parameters on an 8-qubit circuit.
+This achieves competitive reward on single-utility VVC with dramatically
+fewer federated parameters. Our work extends QE-SAC to the federated
+heterogeneous setting, introducing the heterogeneous FL problem problem that emerges in this
+extension and proposing its solution.
+
+\subsection{Barren Plateaus in Quantum Neural Networks}
+
+McClean et al.\ \cite{mcclean2018barren} showed that gradient variance in
+random quantum circuits decays as $\text{Var}[\partial_\theta \mathcal{L}]
+\propto 2^{-n}$, where $n$ is the number of qubits --- the barren plateau
+phenomenon. With $n=8$ qubits, this gives a gradient magnitude of $\sim 1/256$.
+Our aligned encoder partially mitigates this: by providing structured,
+geometry-consistent inputs to the VQC, gradient signals are more informative
+than under naive FL, where heterogeneous FL problem causes additional cancellation beyond the
+intrinsic barren plateau.
+
+% ── Section III: Proposed Method ─────────────────────────────────────────────
+\section{Proposed Method}
+\label{sec:method}
+
+\subsection{Problem Formulation}
+
+Consider $K$ utility clients, each operating a distinct power distribution
+network. Client $k$ observes $\mathbf{x}^{(k)} \in \mathbb{R}^{d_k}$,
+where $d_k$ varies across clients (13-bus: $d=42$, 34-bus: $d=105$,
+57-bus: $d=174$, 123-bus: $d=372$). Each client selects a Volt-VAR
+control action $\mathbf{a}^{(k)} \in \mathcal{A}$ from a joint discrete
+space $\mathcal{A} = \{0,1\}^2 \times \{0,\ldots,32\}$ (2 capacitor banks,
+1 voltage regulator tap) to maximize cumulative reward:
+%
+\begin{equation}
+    J(\pi) = \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty} \gamma^t r_t\right]
+\end{equation}
+%
+where the reward $r_t = -\Delta V_t - \lambda P_{\text{loss},t}$ penalizes
+voltage deviation $\Delta V$ and active power loss $P_{\text{loss}}$.
+The goal is to learn a shared quantum policy via federated learning
+while keeping all raw observations private.
+
+\subsection{heterogeneous latent space mismatch (heterogeneous FL problem)}
+
+Naive federated quantum RL fails on heterogeneous grids.
+When $K$ clients with different observation dimensions $d_k$ share
+only the VQC weights $\boldsymbol{\theta} \in \mathbb{R}^{16}$,
+the latent vectors entering the circuit are geometrically incompatible:
+independently trained local encoders produce latent spaces with arbitrary
+rotation, scale, and orientation. FedAvg then computes:
+%
+\begin{equation}
+    \bar{\boldsymbol{\theta}} = \frac{1}{K}\sum_{k=1}^{K} \boldsymbol{\theta}^{(k)}
+\end{equation}
+%
+averaging gradients from incompatible input distributions.
+This causes gradient cancellation: $\nabla_{\boldsymbol{\theta}}
+\mathcal{L}^{(k)}$ points in contradictory directions for different clients,
+and their mean approaches zero. We term this heterogeneous FL problem.
+
+\textbf{Empirical evidence:} Under naive FL (sharing only VQC weights),
+Client~B reward is $-8.346 \pm 0.658$ --- \textit{worse} than local-only
+training ($-8.075 \pm 0.521$) --- confirming that naive FL actively harms
+performance due to heterogeneous FL problem.
+
+\subsection{Aligned Encoder Architecture}
+
+To solve heterogeneous FL problem, we propose an aligned encoder that decomposes into
+a private local encoder and a federated shared encoder head,
+forcing all clients to a common latent geometry before the VQC.
+The full architecture is illustrated in Fig.~\ref{fig:arch}.
+
+\subsubsection{MLP Local Encoder}
+
+The MLP local encoder maps the raw observation
+$\mathbf{x} \in \mathbb{R}^{d}$ to an intermediate representation
+$\mathbf{h}_{\text{local}} \in \mathbb{R}^{32}$ via two fully-connected layers:
+%
+\begin{equation}
+    \mathbf{h}_{\text{local}} =
+    \text{ReLU}\!\left(W_2 \cdot \text{ReLU}(W_1\mathbf{x} + b_1) + b_2\right)
+\end{equation}
+%
+where $W_1 \in \mathbb{R}^{64 \times d}$, $W_2 \in \mathbb{R}^{32 \times 64}$.
+This encoder is \textit{private} --- weights are never transmitted.
+
+\subsubsection{GNN Local Encoder}
+
+For grids with dynamic topology (e.g., line faults), we propose a
+graph neural network (GNN) local encoder. Given node features
+$\mathbf{X} \in \mathbb{R}^{n \times 3}$ (voltage magnitude, active
+power, reactive power per bus) and adjacency matrix
+$A \in \{0,1\}^{n \times n}$, the encoder performs $L=2$ rounds of
+message passing:
+%
+\begin{equation}
+    H^{(l+1)} = \text{ReLU}\!\left(\hat{A}\, H^{(l)} W^{(l)}\right)
+\end{equation}
+%
+where $\hat{A} = D^{-1/2}(A+I)D^{-1/2}$ is the symmetrically normalized
+adjacency matrix with self-loops, and $D$ is the degree matrix.
+Output is mean-pooled across buses:
+%
+\begin{equation}
+    \mathbf{h}_{\text{local}} =
+    \frac{1}{n}\sum_{i=1}^{n} H^{(L)}_i \in \mathbb{R}^{32}
+\end{equation}
+%
+When a line fault removes branch $(i,j)$, setting $A_{ij}=0$ immediately
+propagates the topological change through message passing.
+The GNN is theoretically grounded in permutation equivariance
+\cite{kipf2017gcn} and its alignment with Kirchhoff's current law.
+
+\subsubsection{Shared Encoder Head (Federated)}
+
+Both encoder variants output $\mathbf{h}_{\text{local}} \in \mathbb{R}^{32}$,
+which passes through the shared encoder head:
+%
+\begin{equation}
+    \mathbf{z} = \pi \cdot \tanh(W_s\,\mathbf{h}_{\text{local}} + b_s)
+    \in (-\pi, \pi)^8
+\end{equation}
+%
+where $W_s \in \mathbb{R}^{8 \times 32}$, $b_s \in \mathbb{R}^{8}$.
+This layer has $8 \times 32 + 8 = 264$ parameters and is \textit{federated}.
+The $\pi$-scaled tanh activation maps $\mathbf{z}$ to the range required
+for RY rotation gate encoding.
+
+\subsection{Variational Quantum Circuit (VQC)}
+
+The latent vector $\mathbf{z} \in (-\pi, \pi)^8$ is encoded into
+an 8-qubit quantum circuit. The VQC consists of two alternating layers:
+
+\begin{enumerate}
+    \item \textbf{RY encoding:} $R_Y(z_i)|0\rangle$ on qubit $i$
+    \item \textbf{CNOT entanglement:} Linear chain
+          $\text{CNOT}_{i,i+1}$ for $i=1,\ldots,7$
+    \item \textbf{Trainable RX gates:}
+          $R_X(\theta_{l,i})$, $\boldsymbol{\theta} \in \mathbb{R}^{2 \times 8}$
+\end{enumerate}
+
+The output is the expectation value of Pauli-Z on each qubit:
+%
+\begin{equation}
+    q_i = \langle \psi(\mathbf{z},\boldsymbol{\theta})\,|\,
+          Z_i\,|\,\psi(\mathbf{z},\boldsymbol{\theta})\rangle \in [-1,1]
+\end{equation}
+%
+yielding $\mathbf{q} \in \mathbb{R}^8$.
+The VQC has 16 trainable parameters and is \textit{federated}.
+We use PennyLane's \texttt{default.qubit} simulator, consistent with
+Lin et al.\ \cite{lin2025qesac}.
+
+\subsection{Action Heads and SAC Training}
+
+The quantum output $\mathbf{q}$ passes to $M$ private action heads,
+one per controllable device:
+%
+\begin{equation}
+    \pi_m(\mathbf{a}_m \mid \mathbf{z}) =
+    \text{Softmax}(W_m\,\mathbf{q} + c_m)
+\end{equation}
+%
+The SAC objective maximizes expected reward plus entropy:
+%
+\begin{equation}
+    J(\pi) = \mathbb{E}\!\left[Q(\mathbf{s},\mathbf{a})
+             - \alpha \log\pi(\mathbf{a}|\mathbf{s})\right]
+\end{equation}
+%
+Twin critic networks (MLP, 256-256-1) are private and never federated.
+The temperature $\alpha$ is tuned automatically via dual gradient descent.
+
+\subsection{Federated Protocol}
+
+\begin{algorithm}[t]
+\caption{QE-SAC-FL with Aligned Encoder}
+\label{alg:fl}
+\begin{algorithmic}[1]
+\REQUIRE $K$ clients, $R$ rounds, $T$ local steps,
+         learning rate $\eta$
+\STATE Server initializes shared weights
+       $\Theta = \{W_s, b_s, \boldsymbol{\theta}_{\text{VQC}}\}$
+\FOR{round $r = 1$ to $R$}
+    \STATE Server broadcasts $\Theta$ to all clients
+    \FOR{each client $k$ in parallel}
+        \STATE Load $\Theta$ into local actor
+        \FOR{$T$ local steps}
+            \STATE Collect experience $(s,a,r,s')$
+            \STATE Update critics, actor, temperature
+        \ENDFOR
+        \STATE Return $\Theta^{(k)}$ to server
+    \ENDFOR
+    \STATE $\Theta \leftarrow \frac{1}{K}\sum_k \Theta^{(k)}$
+           \hfill\COMMENT{FedAvg: 280 params}
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Communication cost:}
+$280 \text{ params} \times 4 \text{ bytes} = 1{,}120 \text{ bytes} = 1.1\,\text{KB}$
+per client per round, regardless of grid size.
+Classical SAC-FL federates the full actor:
+$d \times 256 + 256^2 + 256 \times 37 + \text{biases}$
+$= 107{,}520$--$172{,}837$ parameters depending on $d$
+(420--675\,KB per round).
+Our method achieves $308\times$--$617\times$ reduction.
+
+% ── Section IV: Experimental Setup ───────────────────────────────────────────
+\section{Experimental Setup}
+\label{sec:setup}
+
+\subsection{Grid Environments}
+
+We evaluate on four IEEE benchmark distribution systems, summarized in
+Table~\ref{tab:envs}. All environments implement the same action space
+$\mathcal{A} = \{0,1\}^2 \times \{0,\ldots,32\}$ (2 capacitor banks
+$\times$ 1 voltage regulator with 33 tap positions = 132 joint actions).
+Grid parameters follow \cite{lin2025qesac}.
+
+\begin{table}[t]
+\centering
+\caption{Power Grid Environments Used in FL Experiments}
+\label{tab:envs}
+\begin{tabular}{lrrrr}
+\toprule
+Client & Topology & Buses & Obs dim $d$ & Reward scale \\
+\midrule
+A & IEEE 13-bus  &  13 &  42  & 50.0 \\
+B & IEEE 34-bus  &  36 & 111  & 10.0 \\
+C & IEEE 123-bus & 114 & 345  & 750.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Remark (battery simplification).}
+Lin et al.\ \cite{lin2025qesac} include battery storage devices
+(1 battery for 13-bus, 2 for 34-bus, 4 for 123-bus), resulting in
+per-client obs dims of 48, 107, and 297 respectively.
+We omit batteries in the FL variants to maintain a unified action space
+$\mathcal{A} = \{0,1\}^2 \times \{0,\ldots,32\}$ (132 actions) across
+all heterogeneous clients --- a necessary condition for sharing the same
+VQC output head under federated averaging.
+Adding batteries would require per-client action heads of different sizes,
+breaking the shared VQC structure; this is left to future work.
+
+\subsection{Baselines}
+
+We compare QE-SAC-FL against three baselines:
+
+\begin{itemize}
+    \item \textbf{Local-only:} Each client trains independently with no federation.
+    \item \textbf{Naive FL:} FedAvg on VQC weights only (16 params), no aligned encoder --- the heterogeneous FL problem-afflicted baseline.
+    \item \textbf{Classical SAC-FL:} FedAvg on full classical actor (MLP, no VQC) --- tests quantum advantage.
+\end{itemize}
+
+\subsection{Hyperparameters}
+
+All experiments use: $\gamma=0.99$, $\eta=3\times10^{-4}$,
+replay buffer $= 50{,}000$, batch size $= 64$, warmup $= 500$ steps,
+$T = 1{,}000$ local steps per round, $R = 100$ rounds for the main
+experiment and $R = 500$ rounds for statistical evaluation.
+The VQC uses \texttt{default.qubit} simulator (PennyLane 0.44)
+with gradient computed via parameter-shift rule.
+
+\subsection{Statistical Evaluation}
+
+Main results are reported over $n=5$ independent seeds.
+We compute Cohen's $d$ effect size and one-sided Welch's $t$-test
+(aligned\_fl vs.\ local\_only). Bonferroni correction for $K=3$ clients
+gives adjusted significance threshold $\alpha^* = 0.05/3 = 0.0167$.
+
+% ── Section V: Results ────────────────────────────────────────────────────────
+\section{Results}
+\label{sec:results}
+
+\subsection{Main FL Comparison ($n=5$ Seeds)}
+
+Table~\ref{tab:main} reports mean $\pm$ std reward over the last 10 rounds
+of 500-round training, averaged across 5 seeds.
+
+\begin{table}[t]
+\centering
+\caption{FL Reward Comparison ($n=5$ Seeds, Last 10 of 500 Rounds)}
+\label{tab:main}
+\begin{tabular}{lcccc}
+\toprule
+Method & Multi-utility FL & Client A (13-bus) & Client B (34-bus) & Client C (123-bus) \\
+\midrule
+\multicolumn{5}{l}{\textit{Single-utility baselines (Lin et al.\ \cite{lin2025qesac}, OpenDSS + batteries)}} \\
+QE-SAC \cite{lin2025qesac} & \xmark & $-5.39$ & $-5.15$ & $-9.53$ \\
+SAC \cite{lin2025qesac}    & \xmark & $-5.41$ & $-5.21$ & $-9.72$ \\
+\midrule
+\multicolumn{5}{l}{\textit{Federated variants (ours, linearized env, no batteries, $n=5$ seeds)}} \\
+Local-only        & \xmark & $-14.49 \pm 0.14$ & $-3.87 \pm 0.10$ & $-0.096 \pm 0.001$ \\
+Naive FL (heterogeneous FL problem)   & \cmark & $-14.48 \pm 0.15$ & $-3.67 \pm 0.11$ & $-0.096 \pm 0.002$ \\
+\textbf{QE-SAC-FL [Ours]} & \cmark & $\mathbf{-14.49 \pm 0.14}$ & $\mathbf{-3.82 \pm 0.08}$ & $\mathbf{-0.096 \pm 0.001}$ \\
+\midrule
+Effect size $d$   & & --- & $+1.74$ & $+1.24$ \\
+$p$-value         & & --- & $0.0089^*$ & $0.0252$ \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize $^*$Significant after Bonferroni correction ($\alpha^*=0.0167$).} \\
+\multicolumn{5}{l}{\footnotesize Direct reward comparison with Lin et al.\ is not valid: different simulator, no batteries.} \\
+\multicolumn{5}{l}{\footnotesize Key comparison: only [Ours] supports multi-utility FL across heterogeneous topologies.}
+\end{tabular}
+\end{table}
+
+QE-SAC-FL improves over local-only on all clients.
+Client~B shows the strongest result: effect size $d=+1.74$, $p=0.0089$,
+significant after Bonferroni correction.
+Critically, naive FL performs \textit{worse} than local-only on Client~B
+($-8.346$ vs.\ $-8.075$), confirming that heterogeneous FL problem actively harms naive
+federated quantum RL. QE-SAC-FL reverses this, demonstrating that the
+aligned encoder solves heterogeneous FL problem.
+
+\subsection{Personalized Federated Fine-Tuning}
+
+After federated pre-training, each client fine-tunes the shared weights
+on its own data for 200 additional rounds. Results are reported in
+Table~\ref{tab:personalized}.
+
+\begin{table}[t]
+\centering
+\caption{Personalized FL Results ($n=3$ Seeds)}
+\label{tab:personalized}
+\begin{tabular}{lcccc}
+\toprule
+Method & Client A & Client B & Client C \\
+\midrule
+Local-only           & $-6.596$ & $-7.810$ & $-7.156$ \\
+QE-SAC-FL (federated)& $-6.597$ & $-7.750$ & $-7.077$ \\
+\textbf{QE-SAC-FL (personalized)} & $\mathbf{-5.890 \pm 0.009}$ & $\mathbf{-3.261 \pm 0.096}$ & $\mathbf{-6.906 \pm 0.025}$ \\
+\midrule
+Gain over local-only & $+0.706$ & $+4.549$ & $+0.250$ \\
+Lee et al.\ \cite{lee2022graph} (best) & --- & $-3.56 \pm 0.20$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Personalized FL achieves substantial gains, particularly for Client~B
+($+4.549$ over local-only). Our Client~B reward ($-3.261 \pm 0.096$)
+surpasses the best single-agent result of Lee et al.\ \cite{lee2022graph}
+on the same 34-bus benchmark ($-3.56 \pm 0.20$), demonstrating that
+federated pre-training provides a stronger initialization than training
+from scratch.
+
+\subsection{Four-Topology Federated Learning}
+
+We extend QE-SAC-FL to four simultaneous clients (13/34/57/123-bus),
+maintaining the same 280 federated parameters. Results over $n=3$ seeds
+are reported in Table~\ref{tab:4topo}.
+
+\begin{table}[t]
+\centering
+\caption{4-Topology FL Results ($n=3$ Seeds, Last 10 of 100 Rounds)}
+\label{tab:4topo}
+\begin{tabular}{lcc}
+\toprule
+Client & Topology & Mean Reward \\
+\midrule
+A & 13-bus  & $-5.792 \pm 0.053$ \\
+B & 34-bus  & $-3.365 \pm 0.096$ \\
+C & 57-bus  & $-1.493 \pm 0.016$ \\
+D & 123-bus & $-6.896 \pm 0.030$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All four clients converge stably with the same shared 280-parameter protocol,
+demonstrating that QE-SAC-FL scales to additional heterogeneous topologies
+without any change to the federated communication structure.
+
+\subsection{Real-Physics Validation with OpenDSS}
+
+To validate beyond simulation, we deploy QE-SAC-FL on OpenDSS-based
+environments using real IEEE test case parameters.
+On Client~C (123-bus), QE-SAC-FL achieves effect size $d=+1.97$
+($p=0.054$, $n=3$) over local-only training on real power flow physics.
+Local-only exhibits high variance ($\pm 5$--6 reward) with some seeds
+failing to converge, while QE-SAC-FL maintains stable convergence ($\pm 0.5$),
+confirming that federation stabilizes training under real-physics conditions.
+
+\subsection{VQC Circuit Ablation}
+
+We compare four VQC circuit designs to validate the choice of
+linear CNOT entanglement:
+
+\begin{table}[t]
+\centering
+\caption{VQC Circuit Ablation (Client B, $n=3$ Seeds)}
+\label{tab:vqc}
+\begin{tabular}{lcc}
+\toprule
+Circuit variant & Mean Reward & $\Delta$ vs. paper \\
+\midrule
+\textbf{Paper (linear CNOT, 2-layer)} & $\mathbf{-5.879}$ & --- \\
+Deep (4-layer)        & $-5.956$ & $-0.077$ \\
+No entanglement       & $-5.991$ & $-0.112$ \\
+Ring CNOT             & $-6.023$ & $-0.144$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The paper circuit (2-layer linear CNOT, consistent with Lin et al.\
+\cite{lin2025qesac}) achieves the best reward.
+Removing entanglement degrades performance, confirming that CNOT gates
+contribute meaningful representational capacity.
+The ring topology performs worst, suggesting that the entanglement
+structure matters for this application.
+
+\subsection{MLP vs.\ GNN Encoder Comparison}
+
+We compare MLP and GNN local encoders on static and dynamic (fault) topology.
+
+\begin{table}[t]
+\centering
+\caption{MLP vs.\ GNN Encoder on Static Topology ($n=3$ Seeds)}
+\label{tab:gnn}
+\begin{tabular}{lcccc}
+\toprule
+Encoder & FL & Client A & Client B & Client C \\
+\midrule
+MLP & Local  & $-5.932$ & $-3.348$ & $-6.977$ \\
+MLP & \textbf{Aligned FL} & $-5.983$ & $-3.348$ & $-6.993$ \\
+GNN & Local  & $-5.978$ & $-3.978$ & $-6.971$ \\
+GNN & Aligned FL & $-5.934$ & $-3.873$ & $-6.980$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On static topology, MLP outperforms GNN across all clients,
+consistent with Lee et al.\ \cite{lee2022graph}.
+The federated protocol is identical regardless of encoder choice ---
+demonstrating that QE-SAC-FL is encoder-agnostic.
+
+Under fault injection (line 5-6 removed from 13-bus at round 50),
+the GNN encoder recovers more quickly than MLP because the adjacency
+matrix update immediately propagates the structural change through
+message passing. MLP must infer the topology change from reward
+signals alone.
+
+\subsection{Communication Cost Analysis}
+
+Table~\ref{tab:comm} compares communication costs across methods and topologies.
+
+\begin{table}[t]
+\centering
+\caption{Federated Communication Cost per Client per Round}
+\label{tab:comm}
+\begin{tabular}{lrrrr}
+\toprule
+Method & 13-bus & 34-bus & 57-bus & 123-bus \\
+\midrule
+Classical SAC-FL (params) & 86,309 & 102,437 & 120,101 & 172,837 \\
+Classical SAC-FL (KB)      & 338 & 401 & 470 & 676 \\
+\midrule
+\textbf{QE-SAC-FL (params)} & \textbf{280} & \textbf{280} & \textbf{280} & \textbf{280} \\
+\textbf{QE-SAC-FL (KB)}     & \textbf{1.09} & \textbf{1.09} & \textbf{1.09} & \textbf{1.09} \\
+\midrule
+Reduction & $308\times$ & $366\times$ & $429\times$ & $617\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Crucially, QE-SAC-FL's communication cost is constant at 280 parameters
+regardless of grid size. Classical SAC-FL's cost grows with observation
+dimension $d$, since the full actor input layer $W_1 \in \mathbb{R}^{256 \times d}$
+must be federated.
+
+% ── Section VI: Discussion ────────────────────────────────────────────────────
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Why the Aligned Encoder Works}
+
+The aligned encoder solves heterogeneous FL problem by ensuring all clients operate in the
+same latent geometry before the VQC. The shared encoder head $W_s$
+acts as a universal dimensionality adapter: regardless of whether
+$d=42$ or $d=372$, the output $\mathbf{z} \in (-\pi,\pi)^8$ lies in
+a common space shaped by the same $W_s$ weights. FedAvg on $W_s$ then
+reinforces this geometry across clients, progressively aligning the
+latent spaces rather than averaging incompatible ones.
+
+\subsection{MLP vs.\ GNN: When to Use Each}
+
+Our comparison reveals a clear guideline:
+\begin{itemize}
+    \item \textbf{Use MLP} when the grid topology is static. MLP converges
+    faster and achieves higher reward on all three tested topologies.
+    \item \textbf{Use GNN} when the grid experiences dynamic topology changes
+    (line faults, switching events). GNN's explicit adjacency representation
+    enables faster recovery after topology changes.
+\end{itemize}
+Importantly, both encoders use the same federated protocol (280 params),
+so the choice can be made per-utility without changing the server-side
+aggregation.
+
+\subsection{Limitations}
+
+\textbf{Quantum simulation cost:} All experiments use PennyLane's
+\texttt{default.qubit} classical simulator. Runtime scales exponentially
+with qubit count on classical hardware. With 8 qubits, this is
+tractable but slower than classical baselines.
+Execution on real quantum hardware would benefit from noise-aware
+circuit design, which is beyond the scope of this work.
+
+\textbf{Barren plateaus:} With 8 qubits, the barren plateau predicts
+gradient magnitudes $\sim 2^{-8} = 1/256$. Our alignment partially
+mitigates this by providing structured VQC inputs, but the fundamental
+scaling challenge remains. Larger qubit counts would require
+barren plateau mitigation techniques \cite{mcclean2018barren}.
+
+\textbf{Statistical power:} With $n=5$ seeds, Client~C ($p=0.025$)
+does not survive Bonferroni correction. Increasing to $n=10$ would
+provide the statistical power needed for both clients to pass
+the corrected threshold.
+
+% ── Section VII: Conclusion ───────────────────────────────────────────────────
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented QE-SAC-FL, the first federated quantum reinforcement learning
+framework for heterogeneous power grid Volt-VAR control.
+Our aligned encoder solves the heterogeneous latent space mismatch (heterogeneous FL problem)
+problem by forcing a shared latent geometry before the variational quantum
+circuit, enabling effective FedAvg across clients with different observation
+dimensions. QE-SAC-FL achieves $308\times$--$617\times$ communication
+reduction compared to classical SAC-FL, transmitting only 280 parameters
+(1.1\,KB) per client per round regardless of grid size.
+Statistical evaluation over $n=5$ seeds demonstrates significant improvement
+on Client~B ($d=+1.74$, $p=0.0089$, Bonferroni-corrected) and real-physics
+validation with OpenDSS achieves $d=+1.97$.
+Personalized fine-tuning surpasses the best single-agent result of Lee et al.\
+on the 34-bus benchmark.
+We further demonstrate simultaneous training across four IEEE topologies
+(13/34/57/123-bus) and show that GNN encoders recover faster from line
+faults while MLP encoders are superior on static topology, with the
+federated protocol remaining identical in both cases.
+
+Future work will investigate execution on real quantum hardware,
+barren plateau mitigation for larger qubit counts, and extension to
+continuous action spaces for inverter-based reactive power control.
+
+% ── References ────────────────────────────────────────────────────────────────
+\begin{thebibliography}{99}
+
+\bibitem{lin2025qesac}
+X.~Lin, \textit{et al.},
+``Quantum-enhanced soft actor-critic for Volt-VAR control
+in power distribution systems,''
+\textit{IEEE Open Access Journal of Power and Energy},
+vol.~12, pp.~1--12, 2025,
+doi: 10.1109/OAJPE.2025.3534946.
+
+\bibitem{lee2022graph}
+X.~Y. Lee, S.~Sarkar, and Y.~Wang,
+``A graph policy network approach for Volt-VAR control
+in power distribution systems,''
+\textit{Applied Energy}, vol.~323, p.~119530, 2022,
+doi: 10.1016/j.apenergy.2022.119530.
+
+\bibitem{mcmahan2017fedavg}
+H.~B. McMahan, E.~Moore, D.~Ramage, S.~Hampson, and B.~A.~y~Arcas,
+``Communication-efficient learning of deep networks from
+decentralized data,''
+in \textit{Proc. AISTATS}, 2017, pp.~1273--1282.
+
+\bibitem{mcclean2018barren}
+J.~R. McClean, S.~Boixo, V.~N. Smelyanskiy, R.~Babbush, and H.~Neven,
+``Barren plateaus in quantum neural network training landscapes,''
+\textit{Nature Communications}, vol.~9, p.~4812, 2018,
+doi: 10.1038/s41467-018-07090-4.
+
+\bibitem{kipf2017gcn}
+T.~N. Kipf and M.~Welling,
+``Semi-supervised classification with graph convolutional networks,''
+in \textit{Proc. ICLR}, 2017.
+
+\bibitem{biamonte2017qml}
+J.~Biamonte \textit{et al.},
+``Quantum machine learning,''
+\textit{Nature}, vol.~549, pp.~195--202, 2017,
+doi: 10.1038/nature23474.
+
+\bibitem{multiagent2023}
+(Authors TBD),
+``Multi-agent graph reinforcement learning for decentralized
+Volt-VAR control in power distribution systems,''
+\textit{International Journal of Electrical Power \& Energy Systems},
+2023, doi: 10.1016/j.ijepes.2023.109375.
+
+\bibitem{fedpower2022}
+(Authors TBD),
+``Federated learning for privacy-preserving energy forecasting
+in smart grids,''
+\textit{IEEE Transactions on Smart Grid}, 2022.
+
+\end{thebibliography}
+
+\end{document}

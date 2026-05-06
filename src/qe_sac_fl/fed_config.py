@@ -19,6 +19,9 @@ class ClientConfig:
     n_actions: int      # total joint discrete actions
     seed: int = 0
     device: str = "cpu" # which GPU this client trains on
+    reward_scale: float = 1.0  # divide env rewards by this before storing in buffer
+    # Set so all clients have similar episode return magnitude (~[-5, -10] range)
+    # A_13bus: ~-333 raw → /50 ≈ -6.7 | B_34bus: ~-74 raw → /10 ≈ -7.4 | C_123bus: ~-5359 raw → /750 ≈ -7.1
 
 
 @dataclass
@@ -50,33 +53,38 @@ class FedConfig:
 
     # --- Federation ---
     federate_vqc_only: bool = True
-    aggregation: str = "uniform"
+    aggregation: str = "uniform"  # "uniform" | "magnitude_inv" (weight by 1/|reward|)
+    server_momentum: float = 0.3        # EMA on global weights: w = m*w_old + (1-m)*fedavg
+    hidden_dim: int = 32   # LocalEncoder output dim — ablation: {16, 32, 64, 128}
 
     # --- Clients ---
     clients: List[ClientConfig] = field(default_factory=lambda: [
         ClientConfig(
-            name     = "Utility_A_13bus",
-            env_id   = "13bus_fl",
-            obs_dim  = 42,
-            n_actions= 132,
-            seed     = 0,
-            device   = "cpu",   # overridden by paper_config()
+            name         = "Utility_A_13bus",
+            env_id       = "13bus_fl",
+            obs_dim      = 43,
+            n_actions    = 132,
+            seed         = 0,
+            device       = "cpu",   # overridden by paper_config()
+            reward_scale = 50.0,    # raw ~-333 → normalized ~-6.7
         ),
         ClientConfig(
-            name     = "Utility_B_34bus",
-            env_id   = "34bus_fl",
-            obs_dim  = 105,
-            n_actions= 132,
-            seed     = 1,
-            device   = "cpu",
+            name         = "Utility_B_34bus",
+            env_id       = "34bus_fl",
+            obs_dim      = 113,
+            n_actions    = 132,
+            seed         = 1,
+            device       = "cpu",
+            reward_scale = 10.0,    # raw ~-74 → normalized ~-7.4
         ),
         ClientConfig(
-            name     = "Utility_C_123bus",
-            env_id   = "123bus_fl",
-            obs_dim  = 372,
-            n_actions= 132,
-            seed     = 2,
-            device   = "cpu",
+            name         = "Utility_C_123bus",
+            env_id       = "123bus_fl",
+            obs_dim      = 349,
+            n_actions    = 132,
+            seed         = 2,
+            device       = "cpu",
+            reward_scale = 750.0,   # raw ~-5359 → normalized ~-7.1
         ),
     ])
 
@@ -132,9 +140,9 @@ def long_run_config(n_rounds: int = 200) -> FedConfig:
 
     devices = [f"cuda:{i}" if i < n_gpus else "cpu" for i in range(3)]
     cfg.clients = [
-        ClientConfig(name="Utility_A_13bus",  env_id="13bus_fl",  obs_dim=42,  n_actions=132, seed=0, device=devices[0]),
-        ClientConfig(name="Utility_B_34bus",  env_id="34bus_fl",  obs_dim=105, n_actions=132, seed=1, device=devices[1]),
-        ClientConfig(name="Utility_C_123bus", env_id="123bus_fl", obs_dim=372, n_actions=132, seed=2, device=devices[2]),
+        ClientConfig(name="Utility_A_13bus",  env_id="13bus_fl",  obs_dim=43,  n_actions=132, seed=0, device=devices[0], reward_scale=50.0),
+        ClientConfig(name="Utility_B_34bus",  env_id="34bus_fl",  obs_dim=113, n_actions=132, seed=1, device=devices[1], reward_scale=10.0),
+        ClientConfig(name="Utility_C_123bus", env_id="123bus_fl", obs_dim=349, n_actions=132, seed=2, device=devices[2], reward_scale=750.0),
     ]
 
     print(f"long_run_config: {n_rounds} rounds, {n_gpus} GPU(s)")
@@ -181,28 +189,31 @@ def paper_config() -> FedConfig:
     devices = [f"cuda:{i}" if i < n_gpus else "cpu" for i in range(3)]
     cfg.clients = [
         ClientConfig(
-            name     = "Utility_A_13bus",
-            env_id   = "13bus_fl",
-            obs_dim  = 42,
-            n_actions= 132,
-            seed     = 0,
-            device   = devices[0],
+            name         = "Utility_A_13bus",
+            env_id       = "13bus_fl",
+            obs_dim      = 43,
+            n_actions    = 132,
+            seed         = 0,
+            device       = devices[0],
+            reward_scale = 50.0,
         ),
         ClientConfig(
-            name     = "Utility_B_34bus",
-            env_id   = "34bus_fl",
-            obs_dim  = 105,
-            n_actions= 132,
-            seed     = 1,
-            device   = devices[1],
+            name         = "Utility_B_34bus",
+            env_id       = "34bus_fl",
+            obs_dim      = 113,
+            n_actions    = 132,
+            seed         = 1,
+            device       = devices[1],
+            reward_scale = 10.0,
         ),
         ClientConfig(
-            name     = "Utility_C_123bus",
-            env_id   = "123bus_fl",
-            obs_dim  = 372,
-            n_actions= 132,
-            seed     = 2,
-            device   = devices[2],
+            name         = "Utility_C_123bus",
+            env_id       = "123bus_fl",
+            obs_dim      = 349,
+            n_actions    = 132,
+            seed         = 2,
+            device       = devices[2],
+            reward_scale = 750.0,
         ),
     ]
 

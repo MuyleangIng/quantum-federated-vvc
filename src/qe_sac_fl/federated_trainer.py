@@ -127,21 +127,62 @@ class FedResults:
 
 
 # ---------------------------------------------------------------------------
+# Reward scaling wrapper
+# ---------------------------------------------------------------------------
+
+class RewardScaledEnv:
+    """
+    Thin env wrapper that divides rewards by a fixed scale before returning them.
+
+    Keeps logged episode returns (which QESACTrainer accumulates from raw rewards)
+    in a comparable range across heterogeneous feeders:
+      A_13bus  raw ~-333 / 50  → ~-6.7
+      B_34bus  raw  ~-74 / 10  → ~-7.4
+      C_123bus raw ~-5359 / 750 → ~-7.1
+
+    This normalises critic targets and VQC gradient magnitudes so FedAvg
+    gives equal effective influence to every client regardless of feeder size.
+    The scale is applied consistently to local_only, naive_fl, and aligned_fl
+    so cross-condition comparisons remain valid (all in normalised units).
+    """
+
+    def __init__(self, env, scale: float):
+        self.env = env
+        self.scale = float(scale)
+        self.observation_space = env.observation_space
+        self.action_space      = env.action_space
+
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        return obs, reward / self.scale, terminated, truncated, info
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
+
+# ---------------------------------------------------------------------------
 # Environment factory
 # ---------------------------------------------------------------------------
 
-def _make_env(env_id: str, seed: int):
+def _make_env(env_id: str, seed: int, reward_scale: float = 1.0):
     if env_id == "13bus" or env_id == "13bus_fl":
-        return VVCEnv13Bus(seed=seed)
-    if env_id == "34bus":
-        return VVCEnv34Bus(seed=seed)
-    if env_id == "34bus_fl":
-        return VVCEnv34BusFL(seed=seed)
-    if env_id == "123bus":
-        return VVCEnv123Bus(seed=seed)
-    if env_id == "123bus_fl":
-        return VVCEnv123BusFL(seed=seed)
-    raise ValueError(f"Unknown env_id: {env_id!r}")
+        env = VVCEnv13Bus(seed=seed)
+    elif env_id == "34bus":
+        env = VVCEnv34Bus(seed=seed)
+    elif env_id == "34bus_fl":
+        env = VVCEnv34BusFL(seed=seed)
+    elif env_id == "123bus":
+        env = VVCEnv123Bus(seed=seed)
+    elif env_id == "123bus_fl":
+        env = VVCEnv123BusFL(seed=seed)
+    else:
+        raise ValueError(f"Unknown env_id: {env_id!r}")
+    if reward_scale != 1.0:
+        env = RewardScaledEnv(env, reward_scale)
+    return env
 
 
 # ---------------------------------------------------------------------------
@@ -183,13 +224,30 @@ def _bytes_per_vqc_update(n_clients: int) -> int:
 # FedAvg aggregation
 # ---------------------------------------------------------------------------
 
-def _fedavg(weight_list: List[torch.Tensor],
-            aggregation: str = "uniform") -> torch.Tensor:
+def _fedavg(
+    weight_list: List[torch.Tensor],
+    aggregation: str = "uniform",
+    rewards: Optional[List[float]] = None,
+) -> torch.Tensor:
     """
     Average a list of VQC weight tensors.
-    aggregation = "uniform" → equal weights (standard FedAvg).
+
+    aggregation = "uniform"       → standard FedAvg (equal weights).
+    aggregation = "magnitude_inv" → weight by 1/|reward|; clients with
+                                     smaller |reward| (closer to 0 = better
+                                     performance) contribute MORE to the global
+                                     model. Prevents large-scale feeders from
+                                     dominating the aggregate.
     """
-    stacked = torch.stack(weight_list, dim=0)  # (n_clients, 16)
+    stacked = torch.stack(weight_list, dim=0)  # (n_clients, n_params)
+    if aggregation == "magnitude_inv" and rewards is not None:
+        magnitudes = np.array([max(abs(r), 1e-6) for r in rewards], dtype=np.float64)
+        w = 1.0 / magnitudes
+        w = w / w.sum()
+        wt = torch.tensor(w, dtype=torch.float32)
+        # reshape to (n_clients, 1, 1, ...) to broadcast over any weight shape
+        wt = wt.view(-1, *([1] * (stacked.dim() - 1)))
+        return (stacked * wt).sum(dim=0)
     return stacked.mean(dim=0)
 
 
@@ -214,10 +272,10 @@ class FederatedTrainer:
 
     def _build_client(self, client_cfg: ClientConfig) -> tuple:
         """Build (env, agent, trainer) for one client on its assigned device."""
-        env         = _make_env(client_cfg.env_id, client_cfg.seed)
+        env         = _make_env(client_cfg.env_id, client_cfg.seed, client_cfg.reward_scale)
         device_dims = list(map(int, env.action_space.nvec))
         agent = QESACAgent(
-            obs_dim     = client_cfg.obs_dim,
+            obs_dim     = env.observation_space.shape[0],
             device_dims = device_dims,
             lr          = self.cfg.lr,
             gamma       = self.cfg.gamma,
@@ -323,9 +381,16 @@ class FederatedTrainer:
                     round_logs[name] = log
                     results.logs.append(log)
 
-            # FedAvg on CPU
+            # FedAvg on CPU (reward-weighted if configured)
             if condition == "QE-SAC-FL" and self.cfg.federate_vqc_only:
-                global_vqc = _fedavg(updated_weights, self.cfg.aggregation)
+                round_rewards = [round_logs[ccfg.name].mean_reward for ccfg, _, _ in clients]
+                new_vqc = _fedavg(updated_weights, self.cfg.aggregation, round_rewards)
+                # Server momentum: EMA prevents aggressive weight replacement
+                if self.cfg.server_momentum > 0:
+                    m = self.cfg.server_momentum
+                    global_vqc = m * global_vqc + (1 - m) * new_vqc
+                else:
+                    global_vqc = new_vqc
                 results.bytes_communicated += _bytes_per_vqc_update(n_clients)
 
             if (round_idx + 1) % self.cfg.log_interval == 0:
@@ -349,7 +414,7 @@ class FederatedTrainer:
 
     def _build_aligned_client(self, client_cfg: ClientConfig) -> tuple:
         """Build (env, AlignedQESACAgent, QESACTrainer) for one client."""
-        env         = _make_env(client_cfg.env_id, client_cfg.seed)
+        env         = _make_env(client_cfg.env_id, client_cfg.seed, client_cfg.reward_scale)
         obs_dim     = env.observation_space.shape[0]
         device_dims = list(map(int, env.action_space.nvec))
         agent = AlignedQESACAgent(
@@ -360,6 +425,7 @@ class FederatedTrainer:
             tau         = self.cfg.tau,
             alpha       = self.cfg.alpha,
             buffer_size = self.cfg.buffer_size,
+            hidden_dim  = self.cfg.hidden_dim,
             device      = client_cfg.device,
         )
         trainer = QESACTrainer(
@@ -374,7 +440,7 @@ class FederatedTrainer:
     def run_aligned(self) -> FedResults:
         """
         Aligned federation: federate SharedEncoderHead + VQC each round.
-        Fixes Quantum Latent Space Incompatibility by aligning all clients
+        Fixes heterogeneous latent space mismatch by aligning all clients
         into the same 8-dim latent space before the VQC sees it.
         """
         results = FedResults(config=self.cfg, condition="QE-SAC-FL-Aligned")
@@ -446,14 +512,33 @@ class FederatedTrainer:
                     results.logs.append(log)
 
             # FedAvg: average SharedEncoderHead + VQC separately
-            global_shared = {
-                "shared_head": fedavg_shared_head(
-                    [s["shared_head"] for s in updated_shared]
-                ),
-                "vqc": torch.stack(
-                    [s["vqc"].cpu() for s in updated_shared], dim=0
-                ).mean(dim=0),
-            }
+            # Use reward-weighted aggregation so larger feeders don't dominate
+            round_rewards = [round_logs[ccfg.name].mean_reward for ccfg, _, _ in clients]
+
+            new_vqc = _fedavg(
+                [s["vqc"].cpu() for s in updated_shared],
+                self.cfg.aggregation,
+                round_rewards,
+            )
+            new_head = fedavg_shared_head(
+                [s["shared_head"] for s in updated_shared],
+                aggregation=self.cfg.aggregation,
+                rewards=round_rewards,
+            )
+
+            # Server momentum: EMA on global weights damps aggressive updates
+            m = self.cfg.server_momentum
+            if m > 0:
+                global_shared = {
+                    "vqc": m * global_shared["vqc"] + (1 - m) * new_vqc,
+                    "shared_head": {
+                        k: m * global_shared["shared_head"][k] + (1 - m) * new_head[k]
+                        for k in new_head
+                    },
+                }
+            else:
+                global_shared = {"vqc": new_vqc, "shared_head": new_head}
+
             results.bytes_communicated += bytes_per_aligned_update(n_clients)
 
             if (round_idx + 1) % self.cfg.log_interval == 0:
@@ -572,15 +657,28 @@ class FederatedTrainer:
                     round_logs[name] = log
                     results.logs.append(log)
 
-            # FedAvg over participating clients only
-            global_shared = {
-                "shared_head": fedavg_shared_head(
-                    [s["shared_head"] for s in updated_shared]
-                ),
-                "vqc": torch.stack(
-                    [s["vqc"].cpu() for s in updated_shared], dim=0
-                ).mean(dim=0),
-            }
+            # FedAvg over participating clients only (reward-weighted + momentum)
+            active_rewards = [round_logs[ccfg.name].mean_reward
+                              for ccfg, _, _ in active_clients]
+            new_vqc = _fedavg(
+                [s["vqc"].cpu() for s in updated_shared],
+                self.cfg.aggregation, active_rewards,
+            )
+            new_head = fedavg_shared_head(
+                [s["shared_head"] for s in updated_shared],
+                aggregation=self.cfg.aggregation, rewards=active_rewards,
+            )
+            m = self.cfg.server_momentum
+            if m > 0:
+                global_shared = {
+                    "vqc": m * global_shared["vqc"] + (1 - m) * new_vqc,
+                    "shared_head": {
+                        k: m * global_shared["shared_head"][k] + (1 - m) * new_head[k]
+                        for k in new_head
+                    },
+                }
+            else:
+                global_shared = {"vqc": new_vqc, "shared_head": new_head}
             results.bytes_communicated += bytes_per_aligned_update(n_active)
 
             if (round_idx + 1) % self.cfg.log_interval == 0:

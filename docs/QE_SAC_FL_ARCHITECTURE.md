@@ -228,11 +228,11 @@ Each utility **owns** its grid. Data is **private**. They never share raw observ
 | **VQC** | Private | Federated | Federated |
 | **SharedHead** | — | — | Federated |
 | **Result** | Baseline | WORSE than local | BETTER (13-bus) |
-| **Problem** | — | QLSI | CSA on 123-bus |
+| **Problem** | — | heterogeneous FL problem | CSA on 123-bus |
 
 ### Known Problems
 
-**Problem 1 — QLSI (Quantum Latent Space Incompatibility)**
+**Problem 1 — heterogeneous FL problem (Quantum Latent Space Incompatibility)**
 Each client's CAE independently learns its own meaning for the 8 latent dimensions.
 When the VQC is shared, Client A's `z[0]` means "voltage drop" but Client B's `z[0]`
 means "aggregate load" → VQC receives contradictory signals → worse than training alone.
@@ -317,6 +317,6 @@ artifacts/qe_sac_fl/
 | **RL (SAC)** | Agent learns to pick grid actions by trial and error to maximise reward |
 | **QE (VQC)** | Replaces classical actor with a 16-parameter quantum circuit → more stable |
 | **FL (FedAvg)** | 3 utilities share only VQC + SharedHead weights every round, not raw data |
-| **AlignedCAE** | Splits encoder into private part + shared part → fixes QLSI |
+| **AlignedCAE** | Splits encoder into private part + shared part → fixes heterogeneous FL problem |
 | **FedProx** *(Task 3)* | Adds penalty to keep clients close to global model → fixes PAD |
 | **Grad-norm FedAvg** *(Task 2)* | Normalises client contributions by obs_dim → fixes CSA |

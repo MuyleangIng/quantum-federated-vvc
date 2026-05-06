@@ -1,10 +1,11 @@
 """
 IEEE 34-bus VVC environment — Client B for QE-SAC-FL.
 
-Approximate IEEE 34-bus Test Feeder (EPRI / IEEE PES standard).
+Real IEEE 34-bus Test Feeder (IEEE PES 1992, EPRI standard).
+Extracted from OpenDSS ieee34Mod1.dss — 36 buses, 32 branches, 24.9 kV base.
 Medium-sized rural feeder: longer branches, higher impedance than 13-bus.
 
-Observation dim: 34 buses × 3 (V, P, Q) + 4 caps + 2 regs = 108
+Observation dim: 36 buses × 3 (V, P, Q) + 4 caps + 2 regs = 114
 Action space:    MultiDiscrete([2, 2, 2, 2, 33, 33])
                  → 4 cap banks (ON/OFF) × 2 regulators (33 taps each)
 """
@@ -14,112 +15,110 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 import numpy as np
-from src.qe_sac.env_utils import _VVCEnvBase, _gen_123bus_branches, _gen_123bus_loads
+from src.qe_sac.env_utils import _VVCEnvBase, _IEEE123_BRANCHES, _IEEE123_BASE_LOADS
 
 
 # ---------------------------------------------------------------------------
 # IEEE 34-bus linearized network parameters
+# Real data extracted from OpenDSS ieee34Mod1.dss (IEEE PES 1992 Test Feeder)
 # Branch data: (from_bus, to_bus, r_pu, x_pu) on 100 MVA, 24.9 kV base
-# Approximate values from IEEE 34 Node Test Feeder documentation.
-# The 34-bus feeder is longer and higher-impedance than the 13-bus feeder
-# (rural distribution — longer line segments, more voltage drop).
+# Z_base = 24.9² / 100 = 6.2001 Ω
+# 36 buses (includes regulator/transformer nodes), 32 branches
 # ---------------------------------------------------------------------------
 
 _IEEE34_BRANCHES = [
-    # Main trunk: bus 800 → 808 → ... (0-indexed here)
-    (0,  1,  0.1808, 0.1580),   # 800 → 802
-    (1,  2,  0.4930, 0.4310),   # 802 → 806
-    (2,  3,  0.2810, 0.1910),   # 806 → 808
-    (3,  4,  1.0400, 0.7400),   # 808 → 810
-    (3,  5,  0.1870, 0.1270),   # 808 → 812
-    (5,  6,  0.5590, 0.3800),   # 812 → 814
-    (6,  7,  0.0000, 0.0000),   # 814 → 850 (voltage regulator)
-    (7,  8,  0.3080, 0.2230),   # 850 → 816
-    (8,  9,  0.1680, 0.1150),   # 816 → 818
-    (8,  10, 0.3070, 0.2200),   # 816 → 824
-    (10, 11, 0.2810, 0.1910),   # 824 → 826
-    (10, 12, 0.0920, 0.0650),   # 824 → 828
-    (12, 13, 0.1880, 0.1280),   # 828 → 830
-    (13, 14, 0.0000, 0.0000),   # 830 → 854 (voltage regulator)
-    (14, 15, 0.5120, 0.3480),   # 854 → 856
-    (14, 16, 0.1570, 0.1070),   # 854 → 852
-    (16, 17, 0.5120, 0.3480),   # 852 → 832
-    (17, 18, 0.3120, 0.2120),   # 832 → 834
-    (18, 19, 0.1750, 0.1190),   # 834 → 836
-    (19, 20, 0.2490, 0.1690),   # 836 → 840
-    (19, 21, 0.3500, 0.2380),   # 836 → 862
-    (17, 22, 0.1640, 0.1110),   # 832 → 844
-    (22, 23, 0.4760, 0.3230),   # 844 → 846
-    (23, 24, 0.2890, 0.1960),   # 846 → 848
-    (7,  25, 0.4500, 0.3080),   # 850 → 820
-    (25, 26, 0.3660, 0.2490),   # 820 → 822
-    (2,  27, 0.1120, 0.0760),   # 806 → 860
-    (27, 28, 0.5590, 0.3800),   # 860 → 838
-    (5,  29, 0.3080, 0.2230),   # 812 → 842
-    (14, 30, 0.2310, 0.1570),   # 854 → 864
-    (17, 31, 0.2040, 0.1390),   # 832 → 858
-    (31, 32, 0.3410, 0.2320),   # 858 → 834b
-    (0,  33, 0.0500, 0.0350),   # 800 → substation branch B
+    (0,  1,  0.0241, 0.0502),
+    (1,  2,  0.0162, 0.0337),
+    (2,  3,  0.3015, 0.6269),
+    (3,  4,  0.0543, 0.1129),
+    (3,  5,  0.3508, 0.7294),
+    (5,  6,  0.2781, 0.5783),
+    (7,  25, 0.0001, 0.0002),
+    (8,  9,  0.0160, 0.0333),
+    (8,  12, 0.0955, 0.1986),
+    (9,  10, 0.4504, 0.9366),
+    (10, 11, 0.1285, 0.2673),
+    (12, 13, 0.0283, 0.0589),
+    (12, 14, 0.0079, 0.0163),
+    (14, 15, 0.1912, 0.3976),
+    (15, 28, 0.0049, 0.0101),
+    (16, 30, 0.0458, 0.0953),
+    (17, 31, 0.0189, 0.0393),
+    (17, 21, 0.0026, 0.0054),
+    (18, 20, 0.0080, 0.0167),
+    (18, 32, 0.0026, 0.0054),
+    (21, 22, 0.0126, 0.0263),
+    (22, 23, 0.0341, 0.0708),
+    (23, 24, 0.0050, 0.0103),
+    (25, 8,  0.0029, 0.0060),
+    (27, 16, 0.0001, 0.0002),
+    (28, 29, 0.2182, 0.4538),
+    (28, 26, 0.3445, 0.7164),
+    (30, 33, 0.0152, 0.0315),
+    (30, 17, 0.0545, 0.1134),
+    (31, 18, 0.0251, 0.0521),
+    (32, 19, 0.0455, 0.0945),
+    (34, 35, 0.0988, 0.2054),
 ]
 
-# Base loads (P_kW, Q_kVAR) per bus — IEEE 34-bus total ≈ 1800 kW
-# This is a lightly loaded rural feeder compared to 13-bus
+# Base loads (P_kW, Q_kVAR) per bus — real IEEE 34-bus total ≈ 1900 kW
 _IEEE34_BASE_LOADS = np.array([
-    [0,    0   ],  # bus 0  — substation
-    [0,    0   ],  # bus 1
-    [0,    0   ],  # bus 2
-    [0,    0   ],  # bus 3
-    [16,   8   ],  # bus 4
-    [0,    0   ],  # bus 5
-    [0,    0   ],  # bus 6
-    [0,    0   ],  # bus 7  — regulator
-    [40,   20  ],  # bus 8
-    [40,   20  ],  # bus 9
-    [0,    0   ],  # bus 10
-    [0,    0   ],  # bus 11
-    [4,    2   ],  # bus 12
-    [0,    0   ],  # bus 13
-    [0,    0   ],  # bus 14 — regulator
-    [40,   20  ],  # bus 15
-    [0,    0   ],  # bus 16
-    [0,    0   ],  # bus 17
-    [4,    2   ],  # bus 18
-    [0,    0   ],  # bus 19
-    [27,   14  ],  # bus 20
-    [28,   14  ],  # bus 21
-    [0,    0   ],  # bus 22
-    [23,   11  ],  # bus 23
-    [25,   13  ],  # bus 24
-    [0,    0   ],  # bus 25
-    [85,   40  ],  # bus 26
-    [0,    0   ],  # bus 27
-    [126,  62  ],  # bus 28
-    [8,    4   ],  # bus 29
-    [2,    1   ],  # bus 30
-    [0,    0   ],  # bus 31
-    [0,    0   ],  # bus 32
-    [0,    0   ],  # bus 33
+    [0.0,   0.0  ],  # bus 0  — substation
+    [27.5,  14.5 ],  # bus 1
+    [27.5,  14.5 ],  # bus 2
+    [8.0,   4.0  ],  # bus 3
+    [8.0,   4.0  ],  # bus 4
+    [0.0,   0.0  ],  # bus 5
+    [0.0,   0.0  ],  # bus 6
+    [0.0,   0.0  ],  # bus 7  — regulator
+    [2.5,   1.0  ],  # bus 8
+    [17.0,  8.5  ],  # bus 9
+    [84.5,  43.5 ],  # bus 10
+    [67.5,  35.0 ],  # bus 11
+    [24.5,  12.0 ],  # bus 12
+    [20.0,  10.0 ],  # bus 13
+    [5.5,   2.5  ],  # bus 14
+    [48.5,  21.5 ],  # bus 15
+    [7.5,   3.5  ],  # bus 16
+    [89.0,  45.0 ],  # bus 17
+    [61.0,  31.5 ],  # bus 18
+    [14.0,  7.0  ],  # bus 19
+    [47.0,  31.0 ],  # bus 20
+    [4.5,   2.5  ],  # bus 21
+    [432.0, 329.0],  # bus 22
+    [34.0,  17.0 ],  # bus 23
+    [71.5,  53.5 ],  # bus 24
+    [0.0,   0.0  ],  # bus 25
+    [0.0,   0.0  ],  # bus 26
+    [0.0,   0.0  ],  # bus 27
+    [2.0,   1.0  ],  # bus 28
+    [2.0,   1.0  ],  # bus 29
+    [24.5,  12.5 ],  # bus 30
+    [174.0, 106.0],  # bus 31
+    [14.0,  7.0  ],  # bus 32
+    [1.0,   0.5  ],  # bus 33
+    [0.0,   0.0  ],  # bus 34
+    [450.0, 225.0],  # bus 35
 ], dtype=np.float32)
 
-# Capacitor banks: buses 11, 24, 29, 30 (typical 34-bus cap placement)
+# Capacitor banks: buses 11, 24, 29, 30 (real 34-bus cap placement)
 _IEEE34_CAP_BUSES = [11, 24, 29, 30]
 _IEEE34_CAP_SIZES = [300.0, 150.0, 150.0, 100.0]   # kVAR
 
-# Two voltage regulators (branches 6 and 13 above are reg branches)
+# Two voltage regulators
 _IEEE34_N_REGS = 2
 _IEEE34_N_BATS = 0
 
 
 class VVCEnv34Bus(_VVCEnvBase):
     """
-    VVC environment for IEEE 34-bus distribution feeder.
+    VVC environment for IEEE 34-bus distribution feeder (real OpenDSS data).
 
     This is Client B in the QE-SAC-FL federated setup.
-    Represents a medium rural feeder (higher impedance than 13-bus,
-    smaller than 123-bus) — genuinely different from other clients.
+    36 buses, 32 branches, 24.9 kV base — rural distribution feeder.
 
     Devices: 4 capacitor banks, 2 voltage regulators.
-    Observation dim: 34*3 + 4 + 2 = 108
+    Observation dim: 36*3 + 4 + 2 = 114
     Action space: MultiDiscrete([2, 2, 2, 2, 33, 33])
                   → joint size = 2^4 × 33^2 = 17,424
     """
@@ -129,7 +128,7 @@ class VVCEnv34Bus(_VVCEnvBase):
     _cap_sizes  = _IEEE34_CAP_SIZES
     _n_regs     = _IEEE34_N_REGS
     _n_bats     = _IEEE34_N_BATS
-    _n_buses    = 34
+    _n_buses    = 36
 
 
 # ---------------------------------------------------------------------------
@@ -149,9 +148,10 @@ _IEEE34_N_REGS_SIMPLE    = 1                 # 1 regulator
 
 class VVCEnv34BusFL(_VVCEnvBase):
     """
-    Simplified 34-bus env for federated experiments.
-    Devices: 2 caps + 1 reg  → same action space as 13-bus (132 actions).
-    Observation dim: 34*3 + 2 + 1 = 105
+    Simplified 34-bus env for federated experiments (real OpenDSS data).
+    36 buses, 32 branches, 24.9 kV base.
+    Devices: 2 caps + 1 reg + 2 batteries (matching Lin et al. 2025).
+    Observation dim: 36*3 + 2 + 1 + 2 = 113
     Use this as Client B in QE-SAC-FL.
     """
     _branches   = _IEEE34_BRANCHES
@@ -159,8 +159,8 @@ class VVCEnv34BusFL(_VVCEnvBase):
     _cap_buses  = _IEEE34_CAP_BUSES_SIMPLE
     _cap_sizes  = _IEEE34_CAP_SIZES_SIMPLE
     _n_regs     = _IEEE34_N_REGS_SIMPLE
-    _n_bats     = 0
-    _n_buses    = 34
+    _n_bats     = 2
+    _n_buses    = 36
 
 
 # ---------------------------------------------------------------------------
@@ -169,18 +169,19 @@ class VVCEnv34BusFL(_VVCEnvBase):
 
 class VVCEnv123BusFL(_VVCEnvBase):
     """
-    Simplified 123-bus env for federated experiments.
-    Devices: 2 caps + 1 reg  → same action space as 13-bus (132 actions).
-    Observation dim: 123*3 + 2 + 1 = 372
+    IEEE 123-bus env for federated experiments (real IEEE PES 1992 data).
+    Extracted from OpenDSS IEEE123Master.dss — 114 active buses, 107 branches.
+    Devices: 2 caps + 1 reg + 4 batteries (matching Lin et al. 2025).
+    Observation dim: 114*3 + 2 + 1 + 4 = 349
     Use this as Client C in QE-SAC-FL.
     """
-    _branches   = _gen_123bus_branches(123)
-    _base_loads = _gen_123bus_loads(123)
-    _cap_buses  = [10, 70]          # 2 caps
+    _branches   = _IEEE123_BRANCHES
+    _base_loads = _IEEE123_BASE_LOADS
+    _cap_buses  = [10, 70]
     _cap_sizes  = [600.0, 600.0]
     _n_regs     = 1
-    _n_bats     = 0
-    _n_buses    = 123
+    _n_bats     = 4
+    _n_buses    = 114
 
 
 # ---------------------------------------------------------------------------

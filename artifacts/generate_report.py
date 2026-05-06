@@ -107,7 +107,7 @@ def cover_page():
     elems.append(info_box(
         "<b>One-sentence summary:</b>  We propose QE-SAC-FL — the first quantum federated "
         "reinforcement learning framework for multi-utility Volt-VAR control — solving Quantum "
-        "Latent Space Incompatibility (QLSI) with a shared encoder alignment mechanism, enabling "
+        "Latent Space Incompatibility (heterogeneous FL problem) with a shared encoder alignment mechanism, enabling "
         "privacy-preserving quantum advantage transfer across heterogeneous power grids at "
         "<b>385× less communication cost</b> than classical federated SAC."
     ))
@@ -167,7 +167,7 @@ def exec_summary():
     elems.append(Paragraph("3 Problems We Solve:", H2))
     prob_data = [
         ["P1", "Privacy",            "Utilities cannot legally share raw grid data"],
-        ["P2", "QLSI",               "Each grid's CAE learns a different latent space → VQC weights incompatible across clients"],
+        ["P2", "heterogeneous FL problem",               "Each grid's CAE learns a different latent space → VQC weights incompatible across clients"],
         ["P3", "Communication Cost", "Classical federated SAC shares 113K parameters — too expensive"],
     ]
     tbl = Table([["#", "Problem", "Description"]] + prob_data,
@@ -190,7 +190,7 @@ def exec_summary():
     elems.append(Paragraph("4 Key Contributions:", H2))
     contribs = [
         ("C1", "New Framework",         "First quantum federated RL system for multi-utility Volt-VAR Control"),
-        ("C2", "New Problem (QLSI)",    "Formally define Quantum Latent Space Incompatibility — novel in QFL literature"),
+        ("C2", "New Problem (heterogeneous FL problem)",    "Formally define Quantum Latent Space Incompatibility — novel in QFL literature"),
         ("C3", "New Solution",          "SharedEncoderHead aligns all clients to same 8-dim latent space before VQC"),
         ("C4", "Communication Saving",  "288 shared params vs 110,724 classical → 385× less data per round"),
     ]
@@ -222,7 +222,7 @@ def new_progress():
         ("✓ DONE", "QE-SAC baseline reproduced",     "Paper-exact architecture: CAE(64→32→8) + VQC(8q,2L,16params) + SAC. Verified against Lin et al. 2025.",          GREEN),
         ("✓ DONE", "OpenDSS environment (3 feeders)", "IEEE 13-bus, 34-bus, 123-bus — real 3-phase AC simulation. obs_dim=48 confirmed matches PowerGym exactly.",        GREEN),
         ("✓ DONE", "FL framework (3 conditions)",     "local_only / QE-SAC-FL (VQC only) / QE-SAC-FL-Aligned (SharedHead+VQC). All coded and tested.",                  GREEN),
-        ("✓ DONE", "QLSI solution",                   "AlignedCAE: LocalEncoder (private) + SharedEncoderHead (federated). Fixes incompatible latent spaces.",            GREEN),
+        ("✓ DONE", "heterogeneous FL problem solution",                   "AlignedCAE: LocalEncoder (private) + SharedEncoderHead (federated). Fixes incompatible latent spaces.",            GREEN),
         ("✓ DONE", "Partial participation (H6)",      "33% client dropout per round — tests robustness to offline utilities.",                                            GREEN),
         ("✓ DONE", "Personalized FL (H5)",            "FL warm-start + local fine-tuning phase — best of both global and local.",                                         GREEN),
         ("✓ DONE", "CAE architecture bug fixed",      "Was input→64→8 (wrong). Now input→64→32→8 (paper-correct). All old results deleted and re-run.",                   GREEN),
@@ -300,7 +300,7 @@ def ongoing():
         "50 FL rounds × 1,000 local steps per round per client",
         "3 conditions compared: local_only vs QE-SAC-FL vs QE-SAC-FL-Aligned",
         "Parallel clients: each on its own GPU (ThreadPoolExecutor)",
-        "Metrics: H1 final reward, H2 convergence speed, H3 communication bytes, H4 QLSI fix, H5 personalization, H6 dropout robustness",
+        "Metrics: H1 final reward, H2 convergence speed, H3 communication bytes, H4 heterogeneous FL problem fix, H5 personalization, H6 dropout robustness",
     ]
     for item in fl_items:
         elems.append(bullet(item))
@@ -339,7 +339,7 @@ def architecture():
         ("Step 2", "Ask: can we federate QE-SAC across multiple utilities?",
          "Each utility has a different feeder (13-bus, 34-bus, 123-bus). Each trains its own QE-SAC. "
          "The natural idea: share VQC weights via FedAvg — small (16 params), low communication cost."),
-        ("Step 3", "Discover the QLSI problem",
+        ("Step 3", "Discover the heterogeneous FL problem problem",
          "Naive VQC sharing fails. Each client's CAE encoder maps observations to a different 8-dim "
          "space. Qubit 1 means 'high voltage on bus 3' for Client A but 'high load on bus 7' for "
          "Client B. Averaging these VQC weights produces a meaningless global model."),
@@ -396,7 +396,7 @@ def architecture():
          "YES — federated\nevery round",
          "Maps all clients to the SAME 8-dim latent space in [-π, π]. "
          "Tanh×π scales output to angle range needed by VQC encoding. "
-         "This is the QLSI fix. FedAvg on this layer forces a shared "
+         "This is the heterogeneous FL problem fix. FedAvg on this layer forces a shared "
          "quantum representation across utilities."],
         ["VQC\n(8 qubits, 2 layers)",
          "8 → 8",
@@ -492,8 +492,8 @@ def architecture():
     ))
     elems.append(sp(0.4))
 
-    # ── 4.5 QLSI Before/After ─────────────────────────────────────────────────
-    elems.append(Paragraph("4.5  QLSI — Before and After the Fix", H2))
+    # ── 4.5 heterogeneous FL problem Before/After ─────────────────────────────────────────────────
+    elems.append(Paragraph("4.5  heterogeneous FL problem — Before and After the Fix", H2))
     qlsi_data = [
         ["",               "Without Fix (VQC-only FL)",          "With Fix (QE-SAC-FL-Aligned)"],
         ["Qubit 1 means:", "Different for each client",          "SAME for all clients"],
@@ -617,7 +617,7 @@ def contributions():
          "Only 16 parameters — smallest possible communication overhead. "
          "Quantum entanglement captures non-linear correlations that classical NNs need many more parameters for."),
         ("SharedEncoderHead",
-         "Solves QLSI directly. Without it, VQC FedAvg produces garbage. "
+         "Solves heterogeneous FL problem directly. Without it, VQC FedAvg produces garbage. "
          "With it, all clients speak the same 8-dimensional quantum language."),
         ("SAC as RL backbone",
          "Off-policy (sample efficient), handles MultiDiscrete action space (2 caps + 3 regs + 1 battery), "
@@ -639,11 +639,11 @@ def contributions():
     elems.append(sp(0.3))
     elems.append(Paragraph("Full Comparison Table:", H2))
     comp_data = [
-        ["Method",                   "Params\nShared", "Privacy", "Multi-Grid", "Quantum", "QLSI Fix"],
+        ["Method",                   "Params\nShared", "Privacy", "Multi-Grid", "Quantum", "heterogeneous FL problem Fix"],
         ["Classical SAC (local)",    "0",              "✓",       "✗",          "✗",       "N/A"],
         ["Fed Classical SAC",        "110,724",        "Partial", "✓",          "✗",       "N/A"],
         ["QE-SAC (local only)",      "0",              "✓",       "✗",          "✓",       "N/A"],
-        ["QE-SAC-FL (VQC only)",     "16",             "✓",       "✗ (QLSI)",   "✓",       "✗"],
+        ["QE-SAC-FL (VQC only)",     "16",             "✓",       "✗ (heterogeneous FL problem)",   "✓",       "✗"],
         ["QE-SAC-FL-Aligned (OURS)", "288",            "✓",       "✓",          "✓",       "✓"],
     ]
     tbl = Table(comp_data, colWidths=[5*cm, 2.5*cm, 2*cm, 2.5*cm, 2*cm, 3*cm])
@@ -745,7 +745,7 @@ def issues():
         ["Issue",                   "Description",                                                         "Status",          "Action"],
         ["QE-SAC convergence",      "Reward -42.78 at 50K steps — underperforms Classical-SAC",           "Monitoring",      "Run longer / check lr schedule"],
         ["QC-SAC instability",      "std=17.73 across seeds — high variance, training unstable",          "Investigating",   "Check VQC gradient norms for barren plateau"],
-        ["QLSI",                    "Naive VQC sharing fails — incompatible latent spaces",               "SOLVED",          "SharedEncoderHead implemented"],
+        ["heterogeneous FL problem",                    "Naive VQC sharing fails — incompatible latent spaces",               "SOLVED",          "SharedEncoderHead implemented"],
         ["CAE architecture bug",    "Was 48→64→8, should be 48→64→32→8 (paper-exact)",                   "FIXED",           "All results re-run with correct architecture"],
         ["FL not yet run",          "FL experiment depends on baseline convergence first",                 "Planned",         "Run after tonight's baseline results"],
         ["Barren plateau risk",     "VQC gradient may vanish with more layers (known QML problem)",       "To monitor",      "Log vqc_grad_norm each round"],
@@ -788,11 +788,11 @@ def discussion():
          "Classical federated SAC shares 113K parameters every round — large privacy exposure "
          "and bandwidth cost. QE-SAC-FL shares only 288 parameters. For real utility networks "
          "this difference matters both legally and technically."),
-        ("Q: What is QLSI and is it really a new problem?",
-         "QLSI occurs because each client's encoder maps the observation space differently, "
+        ("Q: What is heterogeneous FL problem and is it really a new problem?",
+         "heterogeneous FL problem occurs because each client's encoder maps the observation space differently, "
          "so VQC qubit encodings are incompatible across clients. "
          "This problem is specific to quantum FL — it does not exist in classical FL. "
-         "We believe this is the first formal definition of QLSI in the literature."),
+         "We believe this is the first formal definition of heterogeneous FL problem in the literature."),
         ("Q: Have you run the FL experiment?",
          "Not yet — the baseline is still training. The FL framework is fully implemented "
          "and ready to run. We will have FL results by end of this week."),
@@ -883,7 +883,7 @@ def summary():
         ["Area",              "Status",    "Detail"],
         ["Architecture",      "✓ DONE",    "Paper-exact QE-SAC + FL framework fully implemented"],
         ["Environments",      "✓ DONE",    "IEEE 13/34/123-bus OpenDSS (real 3-phase AC)"],
-        ["QLSI Solution",     "✓ DONE",    "SharedEncoderHead: 272 params, aligns latent spaces"],
+        ["heterogeneous FL problem Solution",     "✓ DONE",    "SharedEncoderHead: 272 params, aligns latent spaces"],
         ["FL Conditions",     "✓ DONE",    "local_only / QE-SAC-FL / Aligned / Partial / Personalized"],
         ["Baseline Training", "~ RUNNING", "50K steps × 3 seeds × 4 agents — results tonight"],
         ["FL Experiment",     "⏳ NEXT",   "Run after baseline — 50 rounds × 3 clients"],
@@ -910,9 +910,9 @@ def summary():
     elems.append(info_box(
         "We propose <b>QE-SAC-FL</b>, the first quantum federated reinforcement learning framework "
         "for multi-utility Volt-VAR Control. We identify and formally define <b>Quantum Latent Space "
-        "Incompatibility (QLSI)</b> — a new problem specific to quantum federated learning where "
+        "Incompatibility (heterogeneous FL problem)</b> — a new problem specific to quantum federated learning where "
         "independently trained quantum agents develop incompatible latent representations, making "
-        "weight averaging meaningless. We solve QLSI with a <b>SharedEncoderHead</b> that aligns "
+        "weight averaging meaningless. We solve heterogeneous FL problem with a <b>SharedEncoderHead</b> that aligns "
         "all clients into the same 8-dimensional latent space before the VQC. This enables valid "
         "FedAvg across heterogeneous IEEE 13/34/123-bus feeders while sharing only <b>288 parameters "
         "per round</b> — 385× less than classical federated SAC — with no raw grid data leaving "

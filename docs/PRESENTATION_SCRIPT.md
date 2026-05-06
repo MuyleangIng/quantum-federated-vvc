@@ -78,7 +78,7 @@
 
 > "Let me explain each discovery clearly.
 >
-> **QLSI — Quantum Latent Space Incompatibility.**
+> **heterogeneous FL problem — Quantum Latent Space Incompatibility.**
 > Each client trains its own autoencoder independently. Client A's 8 latent
 > numbers mean 'voltage at bus 3, reactive power at bus 7...' and so on.
 > Client B's 8 numbers mean completely different things.
@@ -88,7 +88,7 @@
 > This had never been reported in any federated learning or quantum ML paper.
 >
 > **CSA — Client Size Asymmetry.**
-> After I fixed QLSI with the SharedEncoderHead, I ran for 200 rounds instead
+> After I fixed heterogeneous FL problem with the SharedEncoderHead, I ran for 200 rounds instead
 > of 50. Something surprising happened: the client that benefits from federation
 > *changes* over time. At round 50, only the small feeder (13-bus) is better.
 > At round 200, only the large feeder (123-bus) is better.
@@ -110,7 +110,7 @@
 
 ## SAY
 
-> "Here is what I built to solve QLSI.
+> "Here is what I built to solve heterogeneous FL problem.
 >
 > The key idea is to split the encoder into two parts.
 > The LocalEncoder stays on the client — it is private, feeder-specific,
@@ -143,10 +143,10 @@
 > Row 1 is local-only training — each company trains alone. This is the baseline.
 >
 > Row 2 is unaligned FL — standard FedAvg, VQC only. All three clients are worse.
-> That is QLSI.
+> That is heterogeneous FL problem.
 >
 > Rows 3 and 4 are aligned FL at 50 and 200 rounds with the SharedEncoderHead.
-> QLSI is fixed — but we see CSA. At 50 rounds only 13-bus passes.
+> heterogeneous FL problem is fixed — but we see CSA. At 50 rounds only 13-bus passes.
 > At 200 rounds only 123-bus passes. Notice the reversal.
 >
 > Row 5 is partial FL with two thirds of clients per round. All three fail.
@@ -196,8 +196,8 @@
 > "The most important thing reviewers and professors ask is:
 > 'How is this different from existing work?'
 >
-> For QLSI: FedProx and SCAFFOLD both address heterogeneous data distributions.
-> QLSI is caused by incompatible encoder representations — it occurs even with
+> For heterogeneous FL problem: FedProx and SCAFFOLD both address heterogeneous data distributions.
+> heterogeneous FL problem is caused by incompatible encoder representations — it occurs even with
 > identical data. These papers do not study that.
 >
 > For CSA: Zhao 2018 and FedBN study non-IID data content.
@@ -259,7 +259,7 @@
 
 > "To summarise the six contributions this work makes:
 >
-> One — QLSI: the first identification of this failure mode.
+> One — heterogeneous FL problem: the first identification of this failure mode.
 > Two — SharedEncoderHead: the architectural fix, 395 times cheaper than classical FL.
 > Three — CSA: gradient scale prevents simultaneous benefit.
 > Four — PAD: partial participation breaks the coupling constraint.
@@ -290,12 +290,12 @@
 > quantum classifiers, not quantum RL agents with private encoders.
 > The specific problem here is that the encoder is privately trained
 > per client before federation. No paper in quantum FL, and no paper
-> in classical FL, has identified or named QLSI, CSA, or PAD.
+> in classical FL, has identified or named heterogeneous FL problem, CSA, or PAD.
 > I checked the most cited papers in both fields and none of them
 > study split-encoder architectures with heterogeneous observation dimensions."
 
 **Backup if he pushes:**
-> "The key distinction for QLSI is that it occurs even with IID data.
+> "The key distinction for heterogeneous FL problem is that it occurs even with IID data.
 > Classical FL heterogeneity research assumes the problem is data.
 > We show it can be purely architectural — that is a different category."
 
@@ -426,16 +426,16 @@
 >
 > The 5-seed runs are the first thing being executed now.
 > I expect the mean values to be close to what we see here,
-> because the phenomena are structural — QLSI, CSA, and PAD are
+> because the phenomena are structural — heterogeneous FL problem, CSA, and PAD are
 > caused by architecture, not random initialisation.
 > But until we have error bars I will not claim the numbers are final."
 
 ---
 
-### Q9 — "What is the risk that a reviewer rejects the QLSI claim as obvious?"
+### Q9 — "What is the risk that a reviewer rejects the heterogeneous FL problem claim as obvious?"
 
 **A:**
-> "The claim is specific: QLSI occurs because independently trained
+> "The claim is specific: heterogeneous FL problem occurs because independently trained
 > autoencoders learn *orthogonal latent bases* — the 8 dimensions
 > have no consistent meaning across clients.
 >
@@ -463,7 +463,7 @@
 > Impact factor 8.9, well-known to the power engineering community.
 >
 > If we want a faster publication to establish the priority of the findings —
-> especially the QLSI naming — PES General Meeting has a shorter review cycle
+> especially the heterogeneous FL problem naming — PES General Meeting has a shorter review cycle
 > and a June 2026 deadline that is achievable.
 >
 > We could submit a 5-page conference version to PES first,
@@ -478,7 +478,7 @@
 - [ ] Open `artifacts/QE_SAC_FL_AdvisorSlides.pptx` on your laptop
 - [ ] Have `notebooks/qe_sac_fl_experiment.ipynb` open and ready to show Cell 6 (results table) and Cell 52 (visualisation) if asked
 - [ ] Know these four numbers by heart: **+50.2%, +76.8%, +24.8%, 395×**
-- [ ] Know the three names: **QLSI, CSA, PAD**
+- [ ] Know the three names: **heterogeneous FL problem, CSA, PAD**
 - [ ] If he asks to see the code: open `src/qe_sac_fl/aligned_encoder.py` — the `fedavg_shared_head()` function
 - [ ] If he asks for the full reference list: open `src/qe_sac_fl/docs/FULL_RESEARCH_COMPENDIUM.md` Section 10
 
@@ -488,10 +488,10 @@
 
 | Finding | One sentence |
 |---|---|
-| QLSI | "Independently trained encoders produce incompatible latent spaces — after FedAvg the VQC receives meaningless inputs from every client." |
+| heterogeneous FL problem | "Independently trained encoders produce incompatible latent spaces — after FedAvg the VQC receives meaningless inputs from every client." |
 | CSA | "The SharedHead gradient is dominated by the client with the largest gradient norm — small feeders win early, large feeders win late, never all at once." |
 | PAD | "Partial participation breaks the coupling between LocalEncoder and SharedHead — when a client returns after absence, its encoder is misaligned with the updated SharedHead." |
-| Solution | "Personalised FL gives all clients a shared warm-start, then lets each one fine-tune locally — bypassing both QLSI and CSA." |
+| Solution | "Personalised FL gives all clients a shared warm-start, then lets each one fine-tune locally — bypassing both heterogeneous FL problem and CSA." |
 
 ---
 

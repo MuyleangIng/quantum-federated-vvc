@@ -22,7 +22,7 @@ clear references showing the gap in existing literature.
 
 ---
 
-## Problem 1 — Quantum Latent Space Incompatibility (QLSI)
+## Problem 1 — Quantum Latent Space Incompatibility (heterogeneous FL problem)
 
 ### What is it?
 When each client independently trains an autoencoder to compress its grid state
@@ -33,8 +33,8 @@ training alone.
 
 ### Why is it new?
 Classical FL drift (FedProx, SCAFFOLD, FedBN) addresses non-IID *data distributions*.
-QLSI is caused by incompatible *input spaces* — even with identical data
-distributions, QLSI would still occur. No paper has identified this distinction.
+heterogeneous FL problem is caused by incompatible *input spaces* — even with identical data
+distributions, heterogeneous FL problem would still occur. No paper has identified this distinction.
 
 ### My experimental evidence
 ```
@@ -45,7 +45,7 @@ Results after 50 rounds of federation (3 feeders, 3 GPUs):
   34-bus           -65.5         -69.6        -4.1   ← FL is WORSE
   123-bus        -5364.4       -5420.5       -56.1   ← FL is WORSE
 ```
-Unaligned federation hurts **every single client**. This is the QLSI signature.
+Unaligned federation hurts **every single client**. This is the heterogeneous FL problem signature.
 
 ### My solution — Shared Encoder Head
 Split the encoder into two parts:
@@ -78,7 +78,7 @@ SharedEncoderHead alignment) is the reason this works.
 ## Problem 2 — Client Size Asymmetry (CSA)
 
 ### What is it?
-Even after fixing QLSI with the SharedEncoderHead, the federation still
+Even after fixing heterogeneous FL problem with the SharedEncoderHead, the federation still
 favours different clients at different training stages. Small-feeder clients
 benefit from federation early; large-feeder clients benefit later. At no
 single round count does federation help ALL clients simultaneously.
@@ -124,7 +124,7 @@ dominate the SharedHead direction.
 ### What is it?
 Classical FL is robust when some clients are unavailable each round (McMahan 2017).
 In quantum FL with the SharedEncoderHead, if even one client is absent per round,
-the SharedHead drifts away from that client's LocalEncoder — reintroducing QLSI
+the SharedHead drifts away from that client's LocalEncoder — reintroducing heterogeneous FL problem
 for the absent client every time it rejoins.
 
 ### Why is it new?
@@ -143,7 +143,7 @@ Results with 1 random client dropped each round (2/3 participation):
   123-bus        -5364.4       -5402.9        -38.5  ← WORSE than local
 ```
 Partial participation makes things worse than training alone — identical failure
-pattern to QLSI (Problem 1), but caused by a different mechanism.
+pattern to heterogeneous FL problem (Problem 1), but caused by a different mechanism.
 
 ### The signature that proves it is PAD, not just dropout noise
 VQC gradient norms under partial FL are *higher* than full FL:
@@ -171,9 +171,9 @@ known version, limiting oscillation during partial participation rounds.
 
 | Problem | Novel claim | Evidence | Solution | Status |
 |---|---|---|---|---|
-| **QLSI** | Quantum FL fails due to incompatible encoder latent spaces | All 3 clients worse with FL (−5 to −56 reward) | SharedEncoderHead architecture | ✅ Solved (H5: +25–77%) |
+| **heterogeneous FL problem** | Quantum FL fails due to incompatible encoder latent spaces | All 3 clients worse with FL (−5 to −56 reward) | SharedEncoderHead architecture | ✅ Solved (H5: +25–77%) |
 | **CSA** | SharedHead favours different client sizes at different rounds | H1 reverses between round 50 and round 200 | Gradient-normalised FedAvg | ⬜ Proposed |
-| **PAD** | Partial participation reintroduces QLSI via SharedHead drift | All 3 clients worse with 2/3 participation; high but noisy gradients | FedProx on SharedHead | ⬜ Proposed |
+| **PAD** | Partial participation reintroduces heterogeneous FL problem via SharedHead drift | All 3 clients worse with 2/3 participation; high but noisy gradients | FedProx on SharedHead | ⬜ Proposed |
 
 ---
 
@@ -183,8 +183,8 @@ A good paper needs: **a problem, evidence it exists, a solution, and proof the s
 
 | Component | Status |
 |---|---|
-| Novel problem (QLSI) | ✅ Identified and named |
-| Evidence (QLSI) | ✅ 3 clients all degrade with unaligned FL |
+| Novel problem (heterogeneous FL problem) | ✅ Identified and named |
+| Evidence (heterogeneous FL problem) | ✅ 3 clients all degrade with unaligned FL |
 | Solution (SharedEncoderHead) | ✅ Implemented |
 | Proof solution works | ✅ H5: +25–77% on all 3 clients |
 | Second novel problem (CSA) | ✅ Identified with 200-round experiment |

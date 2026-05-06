@@ -8,7 +8,7 @@ Splits the CAE into two parts:
 All clients have different obs_dim but the same hidden_dim (32),
 so SharedEncoderHead has identical architecture across all clients.
 FedAvg on SharedEncoderHead forces all clients into the same 8-dim
-latent space — fixing Quantum Latent Space Incompatibility.
+latent space — fixing heterogeneous latent space mismatch.
 
 What gets federated each round:
   SharedEncoderHead  272 params  (Linear 32→8 + bias)
@@ -198,16 +198,32 @@ def train_aligned_cae(
 
 def fedavg_shared_head(
     weight_list: list[dict],
+    aggregation: str = "uniform",
+    rewards: list | None = None,
 ) -> dict:
     """
     Average a list of SharedEncoderHead state dicts.
     Returns averaged state dict (on CPU).
+
+    aggregation = "magnitude_inv": weight by 1/|reward| so better clients
+    (less negative reward) contribute more. Mirrors _fedavg() logic.
     """
+    import numpy as np
     keys = weight_list[0].keys()
+    if aggregation == "magnitude_inv" and rewards is not None:
+        magnitudes = np.array([max(abs(r), 1e-6) for r in rewards], dtype=np.float64)
+        w = 1.0 / magnitudes
+        w = w / w.sum()
+        wt = [float(wi) for wi in w]
+    else:
+        n = len(weight_list)
+        wt = [1.0 / n] * n
+
     averaged = {}
     for k in keys:
         stacked = torch.stack([w[k].float() for w in weight_list], dim=0)
-        averaged[k] = stacked.mean(dim=0)
+        weights_t = torch.tensor(wt, dtype=torch.float32)
+        averaged[k] = (stacked * weights_t.view(-1, *([1] * (stacked.dim() - 1)))).sum(dim=0)
     return averaged
 
 

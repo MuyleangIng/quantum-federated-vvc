@@ -111,9 +111,9 @@ This is a single-line change to `fedavg_shared_head()` in `aligned_encoder.py`.
 
 ## Impact on Paper
 
-This finding adds a third novel contribution alongside QLSI and PAD:
+This finding adds a third novel contribution alongside heterogeneous FL problem and PAD:
 
-1. **QLSI** — structural alignment failure of unaligned FL
+1. **heterogeneous FL problem** — structural alignment failure of unaligned FL
 2. **PAD** — alignment breaks under partial participation
 3. **CSA** — SharedHead convergence favours larger clients over time
 

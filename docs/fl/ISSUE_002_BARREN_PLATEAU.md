@@ -164,7 +164,7 @@ Mitigation 2 (local cost functions) is the most theoretically grounded.
 
 ## Related
 
-- ISSUE_001: QLSI — separate problem (latent space incompatibility)
+- ISSUE_001: heterogeneous FL problem — separate problem (latent space incompatibility)
 - ISSUE_003: PAD — explains why partial FL has high but useless gradient norms
 - H4: Barren plateau hypothesis — real data above
 - RESEARCH_PLAN.md: H4 future work section

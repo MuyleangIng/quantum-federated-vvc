@@ -113,7 +113,7 @@ items = [
               "Results: QE-SAC (4,896 params) achieves reward ≈ −6.7 vs Classical-SAC (113,288 params)\n"
               "Quantum agent uses 23× fewer parameters with competitive performance"),
     (YELLOW,  "③  Designed QE-SAC-FL — Federated Learning extension",
-              "Identified QLSI problem (latent space mismatch across clients)\n"
+              "Identified heterogeneous FL problem problem (latent space mismatch across clients)\n"
               "Proposed SharedEncoderHead fix (288 shared params only)\n"
               "Architecture ready for IEEE 13/34/123-bus multi-feeder FL experiments"),
 ]
@@ -156,7 +156,7 @@ txt(s, "QE-SAC-FL  ·  Multi-Feeder Federated Learning",
 txt(s,
     "• Real grids cannot share raw data across feeders\n"
     "  → need Federated Learning\n\n"
-    "• Problem identified: QLSI\n"
+    "• Problem identified: heterogeneous FL problem\n"
     "  Each client's autoencoder learns a different\n"
     "  latent space → standard FedAvg fails\n\n"
     "• Solution: SharedEncoderHead\n"
@@ -170,7 +170,7 @@ txt(s,
 box(s, 0.3, 5.6, 12.73, 0.65, color=RGBColor(0x05, 0x1A, 0x30), border=YELLOW)
 txt(s,
     "Key message:  QE-SAC achieves paper-level voltage control with 23× fewer parameters. "
-    "FL extension with QLSI fix is designed and ready to run.",
+    "FL extension with heterogeneous FL problem fix is designed and ready to run.",
     0.5, 5.68, 12.3, 0.48, size=13, bold=True, color=YELLOW, align=PP_ALIGN.CENTER)
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -383,9 +383,9 @@ for (x, name, info, sc) in clients:
         box(s, x+0.15, yy, 3.7, 0.56, color=RGBColor(0x10, 0x24, 0x38), border=fc)
         txt(s, label, x+0.2, yy+0.04, 3.6, 0.48, size=10, color=fc, align=PP_ALIGN.CENTER)
 
-# QLSI fix note
+# heterogeneous FL problem fix note
 box(s, 0.3, 6.55, 12.73, 0.72, color=RGBColor(0x10, 0x1A, 0x10), border=GREEN)
-txt(s, "QLSI Fix:",        0.5,  6.63, 1.8, 0.55, size=13, bold=True, color=GREEN)
+txt(s, "heterogeneous FL problem Fix:",        0.5,  6.63, 1.8, 0.55, size=13, bold=True, color=GREEN)
 txt(s, "SharedEncoderHead maps each client's local obs to a universal 8-dim latent aligned "
        "across all clients. Only 288 params are shared — local CAE and VQC remain private. "
        "Enables compatible quantum latent spaces for meaningful FL aggregation.",
@@ -407,7 +407,7 @@ conditions = [
      "Aggregate all CAE weights\nIgnores latent space mismatch\nExpected: unstable / poor",
      RED, RGBColor(0x2A, 0x10, 0x10)),
     ("Condition 3\nQE-SAC-FL + SharedEncoderHead",
-     "Aggregate only 288-param head\nQLSI-compatible latents\nExpected: best FL performance",
+     "Aggregate only 288-param head\nheterogeneous FL problem-compatible latents\nExpected: best FL performance",
      GREEN, RGBColor(0x05, 0x25, 0x15)),
 ]
 
@@ -426,7 +426,7 @@ metrics = [
     ("Voltage violations (vviol)",    "Safety — target: 0 violations at convergence"),
     ("Communication bytes / round",  "Efficiency — SharedEncoderHead: only 288×4 = 1,152 bytes/round"),
     ("Convergence rounds",           "Speed — FL rounds to reach local-only reward level"),
-    ("QLSI gap (latent cosine dist)","Alignment quality — SharedEncoderHead should minimize"),
+    ("heterogeneous FL problem gap (latent cosine dist)","Alignment quality — SharedEncoderHead should minimize"),
 ]
 
 for i, (m, d) in enumerate(metrics):
@@ -455,7 +455,7 @@ qa = [
      "13-bus is the standard QRL benchmark (Lin et al.). "
      "The VQC scales with qubits (not problem size) — same 8-qubit circuit handles any obs "
      "after CAE compression. We assume advantage holds; 34/123-bus validation is next step."),
-    ("Q: What exactly is QLSI and why does it matter for FL?",
+    ("Q: What exactly is heterogeneous FL problem and why does it matter for FL?",
      "Each client's CAE learns a different latent space. If we average CAE weights across clients, "
      "the averaged encoder produces incoherent latents that confuse the VQC. "
      "SharedEncoderHead (288 shared params) creates a universal mapping before the CAE — "

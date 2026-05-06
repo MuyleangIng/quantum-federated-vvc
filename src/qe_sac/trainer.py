@@ -113,7 +113,6 @@ class QESACTrainer:
 
         ckpt_path = os.path.join(self.save_dir, "agent_final.pt")
         self.agent.save(ckpt_path)
-        print(f"\nCheckpoint saved → {ckpt_path}")
         return metrics
 
 

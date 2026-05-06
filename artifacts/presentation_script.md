@@ -12,7 +12,7 @@ We extended the QE-SAC quantum reinforcement learning method (Lin et al. 2025) f
 We implemented all four agents from the paper (QE-SAC, QC-SAC, Classical-SAC, SAC-AE) and trained them on the IEEE 13-bus system using OpenDSS. Our key finding confirms the paper: the quantum agent (QE-SAC) achieves competitive voltage control performance using only **4,896 parameters** — 23× fewer than Classical-SAC (113,288 parameters). Classical-SAC achieved mean reward −6.72 (paper: −5.41). QE-SAC seed 0 achieved −7.43 (paper: −5.39), with 2 seeds still training.
 
 **Phase 2 — In Design: QE-SAC-FL (Federated Learning Extension)**
-Real utility networks cannot share raw data across feeders. We designed QE-SAC-FL to enable multi-feeder collaborative training. The key technical challenge is **QLSI (Quantum Latent Space Incompatibility)** — each feeder's autoencoder learns a different latent coordinate system, making standard FedAvg fail for quantum agents. Our solution is a **SharedEncoderHead** (288 shared parameters) that aligns all clients' latent spaces before the VQC, enabling meaningful FL aggregation with only 1,152 bytes of communication per round.
+Real utility networks cannot share raw data across feeders. We designed QE-SAC-FL to enable multi-feeder collaborative training. The key technical challenge is **heterogeneous FL problem (Quantum Latent Space Incompatibility)** — each feeder's autoencoder learns a different latent coordinate system, making standard FedAvg fail for quantum agents. Our solution is a **SharedEncoderHead** (288 shared parameters) that aligns all clients' latent spaces before the VQC, enabling meaningful FL aggregation with only 1,152 bytes of communication per round.
 
 **Next Step:** Run 3 FL conditions (local-only · vanilla FedAvg · QE-SAC-FL+SharedEncoderHead) on IEEE 13/34/123-bus feeders. Estimated 4–5 weeks to full results.
 
@@ -48,7 +48,7 @@ Real utility networks cannot share raw data across feeders. We designed QE-SAC-F
 
 **"Second — I trained all four agents on the IEEE 13-bus power grid using OpenDSS, which is a real 3-phase AC power simulation. I ran 3 seeds each on three RTX 4090 GPUs. The results are very close to what the paper reports — I will show you the numbers on the next slide."**
 
-**"Third — I have designed the Federated Learning extension, called QE-SAC-FL. This is where the new contribution is. I identified a key problem called QLSI — Quantum Latent Space Incompatibility — and proposed a solution. I will explain this in detail later."**
+**"Third — I have designed the Federated Learning extension, called QE-SAC-FL. This is where the new contribution is. I identified a key problem called heterogeneous FL problem — Quantum Latent Space Incompatibility — and proposed a solution. I will explain this in detail later."**
 
 ---
 
@@ -91,7 +91,7 @@ Real utility networks cannot share raw data across feeders. We designed QE-SAC-F
 
 **"We have three clients — each is a different utility feeder operating its own local power grid. They cannot share data. But they want to learn from each other."**
 
-**"The standard approach is Federated Averaging — collect all model weights, average them, send back. But for quantum RL, this breaks. The reason is QLSI."**
+**"The standard approach is Federated Averaging — collect all model weights, average them, send back. But for quantum RL, this breaks. The reason is heterogeneous FL problem."**
 
 **"Each client's CAE learns a completely different latent space. Client A maps voltage readings to one set of 8 numbers. Client B maps its readings to a completely different 8 numbers. If we average the VQC weights, the averaged circuit receives incoherent inputs — it does not know which client it is running on. The policy collapses."**
 
@@ -129,9 +129,9 @@ Real utility networks cannot share raw data across feeders. We designed QE-SAC-F
 
 **"Condition 1 is the local-only baseline — each client trains by itself. No communication. This gives us a lower bound."**
 
-**"Condition 2 is vanilla FL — standard FedAvg on all model weights. I expect this to perform worse than local-only because of QLSI. This is the negative result that motivates my solution."**
+**"Condition 2 is vanilla FL — standard FedAvg on all model weights. I expect this to perform worse than local-only because of heterogeneous FL problem. This is the negative result that motivates my solution."**
 
-**"Condition 3 is QE-SAC-FL with SharedEncoderHead. Only 288 parameters are shared. I expect this to outperform local-only, proving that FL with quantum RL is beneficial when QLSI is addressed."**
+**"Condition 3 is QE-SAC-FL with SharedEncoderHead. Only 288 parameters are shared. I expect this to outperform local-only, proving that FL with quantum RL is beneficial when heterogeneous FL problem is addressed."**
 
 **"The metrics I will measure are: reward per client, voltage violations — which should go to zero at convergence — communication cost per FL round, and convergence speed."**
 
@@ -183,11 +183,11 @@ Real utility networks cannot share raw data across feeders. We designed QE-SAC-F
 
 ---
 
-### Q4: "What is QLSI and how do you know SharedEncoderHead fixes it?"
+### Q4: "What is heterogeneous FL problem and how do you know SharedEncoderHead fixes it?"
 
-**"QLSI — Quantum Latent Space Incompatibility — means that two independently trained CAE encoders produce latent vectors in different coordinate systems. If Client A's CAE maps 'high voltage' to z = [0.8, −0.3, ...] and Client B maps the same physical condition to z = [−0.5, 0.9, ...], averaging their VQC weights is meaningless — the circuit receives inconsistent inputs.**
+**"heterogeneous FL problem — Quantum Latent Space Incompatibility — means that two independently trained CAE encoders produce latent vectors in different coordinate systems. If Client A's CAE maps 'high voltage' to z = [0.8, −0.3, ...] and Client B maps the same physical condition to z = [−0.5, 0.9, ...], averaging their VQC weights is meaningless — the circuit receives inconsistent inputs.**
 
-**SharedEncoderHead fixes this by creating a universal projection layer that is trained collaboratively. It forces all clients to agree on a common coordinate system before the local CAE. We measure the QLSI gap using cosine distance between client latents — a smaller gap means better alignment.**
+**SharedEncoderHead fixes this by creating a universal projection layer that is trained collaboratively. It forces all clients to agree on a common coordinate system before the local CAE. We measure the heterogeneous FL problem gap using cosine distance between client latents — a smaller gap means better alignment.**
 
 **We have not run the FL experiments yet, so this is still a hypothesis. But the mechanism is sound."**
 
@@ -213,9 +213,9 @@ Real utility networks cannot share raw data across feeders. We designed QE-SAC-F
 
 **First — we reproduced and validated QE-SAC on a real power grid simulator. The paper published results but no source code. We built it from scratch, verified every equation, and confirmed the results hold. That alone is a contribution because it proves the method is reproducible.**
 
-**Second — we identified a new problem that the original paper did not address: QLSI — Quantum Latent Space Incompatibility. When you scale quantum RL to multiple clients in a federated setting, each client's autoencoder learns a different coordinate system. Standard Federated Averaging breaks the quantum circuit because the VQC receives inconsistent inputs. Nobody in the QRL-for-power-grids literature has named or solved this problem yet.**
+**Second — we identified a new problem that the original paper did not address: heterogeneous FL problem — Quantum Latent Space Incompatibility. When you scale quantum RL to multiple clients in a federated setting, each client's autoencoder learns a different coordinate system. Standard Federated Averaging breaks the quantum circuit because the VQC receives inconsistent inputs. Nobody in the QRL-for-power-grids literature has named or solved this problem yet.**
 
-**Third — we proposed SharedEncoderHead as the solution. It is a small 288-parameter alignment layer that is the only part shared across clients. It fixes QLSI while keeping all local data private and reducing communication to 1,152 bytes per round — 17 times less than full-model federated averaging.**
+**Third — we proposed SharedEncoderHead as the solution. It is a small 288-parameter alignment layer that is the only part shared across clients. It fixes heterogeneous FL problem while keeping all local data private and reducing communication to 1,152 bytes per round — 17 times less than full-model federated averaging.**
 
 **So the original paper proves quantum RL works on one grid. Our contribution asks: can it work across many grids with private data? And we answer yes — with the right architecture."**
 
@@ -223,7 +223,7 @@ Real utility networks cannot share raw data across feeders. We designed QE-SAC-F
 
 > **If professor pushes: "But you have not run the FL experiments yet — is that really a contribution?"**
 
-**"The theoretical contribution — identifying QLSI and designing the fix — is complete. The empirical validation is the next step. In research, identifying the right problem and proposing a principled solution is itself a contribution. The experiments will confirm or reject the hypothesis — that is what we are running now."**
+**"The theoretical contribution — identifying heterogeneous FL problem and designing the fix — is complete. The empirical validation is the next step. In research, identifying the right problem and proposing a principled solution is itself a contribution. The experiments will confirm or reject the hypothesis — that is what we are running now."**
 
 ---
 
@@ -247,7 +247,7 @@ Real utility networks cannot share raw data across feeders. We designed QE-SAC-F
 
 **Two — The quantum agent uses 23× fewer parameters and achieves competitive performance.**
 
-**Three — The FL design is ready, with a concrete solution to the QLSI problem.**
+**Three — The FL design is ready, with a concrete solution to the heterogeneous FL problem problem.**
 
 **I am ready to start the FL experiments as soon as you give the direction."**
 

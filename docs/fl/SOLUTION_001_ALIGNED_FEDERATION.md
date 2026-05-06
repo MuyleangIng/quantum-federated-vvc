@@ -1,6 +1,6 @@
 # SOLUTION 001 — Aligned Federation via Shared Encoder Head
 
-**Solves:** ISSUE_001 — Quantum Latent Space Incompatibility (QLSI)  
+**Solves:** ISSUE_001 — Quantum Latent Space Incompatibility (heterogeneous FL problem)  
 **Implemented:** 2026-04-01  
 **Status:** VALIDATED — partial H1 pass; H5 (personalised) fully proven  
 **Files:** `src/qe_sac_fl/aligned_encoder.py`, `src/qe_sac_fl/aligned_agent.py`
@@ -20,7 +20,7 @@ BEFORE (broken):
   Client C:  obs_C (372-dim) →  CAE_C  →  z_C (8-dim, C's private space)  →  VQC_avg
 
   Result: VQC_avg operates in a meaningless "average" latent space.
-  All clients degrade after round 1. QLSI confirmed.
+  All clients degrade after round 1. heterogeneous FL problem confirmed.
 ```
 
 ---
@@ -40,7 +40,7 @@ AFTER (fixed):
 
 All clients project to a common 32-dim intermediate space. The SharedEncoderHead
 (32→8) is IDENTICAL across clients and is FedAvg'd each round. This forces all
-clients to agree on the meaning of each latent dimension — fixing QLSI.
+clients to agree on the meaning of each latent dimension — fixing heterogeneous FL problem.
 
 ---
 
@@ -69,7 +69,7 @@ clients to agree on the meaning of each latent dimension — fixing QLSI.
 | 34-bus | −65.5 | −69.6 | −85.0 | ❌ Local (need >50 rounds) |
 | 123-bus | −5364.4 | −5420.5 | −5402.5 | ❌ Local (need >50 rounds) |
 
-**Interpretation:** Aligned FL fixes QLSI but 50 rounds is insufficient for
+**Interpretation:** Aligned FL fixes heterogeneous FL problem but 50 rounds is insufficient for
 large feeders (34-bus, 123-bus). The SharedHead needs more rounds to converge
 on a latent space that is simultaneously useful for 3 very different feeders.
 

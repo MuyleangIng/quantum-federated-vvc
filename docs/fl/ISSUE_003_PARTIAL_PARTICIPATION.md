@@ -3,7 +3,7 @@
 **Discovered:** 2026-04-01  
 **Severity:** Medium — deployment limitation, not a training bug  
 **Status:** OPEN — documented, mitigation planned  
-**Related:** ISSUE_001 (QLSI), SOLUTION_001 (Aligned Federation)
+**Related:** ISSUE_001 (heterogeneous FL problem), SOLUTION_001 (Aligned Federation)
 
 ---
 
@@ -44,7 +44,7 @@ Round t: Clients A and B participate, C is dropped.
 Round t+1: Clients A and C participate, B is dropped.
   → Client C loads the new SharedHead — it has drifted from what C's
     LocalEncoder was trained on
-  → Client C is now misaligned (QLSI re-introduced for C)
+  → Client C is now misaligned (heterogeneous FL problem re-introduced for C)
   → Client A's LocalEncoder is also disrupted by C's misaligned gradients
 
 Round t+2: Clients B and C participate, A is dropped.
@@ -166,6 +166,6 @@ re-align with the drifted SharedHead before contributing to FedAvg.
 | File | Role |
 |---|---|
 | `src/qe_sac_fl/federated_trainer.py` | `run_partial_participation()` implementation |
-| `docs/ISSUE_001_LATENT_INCOMPATIBILITY.md` | Original QLSI problem |
+| `docs/ISSUE_001_LATENT_INCOMPATIBILITY.md` | Original heterogeneous FL problem problem |
 | `docs/SOLUTION_001_ALIGNED_FEDERATION.md` | Solution that PAD affects |
 | `docs/RESEARCH_PLAN.md` | H6 hypothesis and future mitigations |

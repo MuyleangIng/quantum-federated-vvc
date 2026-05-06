@@ -24,7 +24,7 @@ learning were discovered, named, and solved experimentally.
 
 ## Three Novel Discoveries
 
-### 1. QLSI — Quantum Latent Space Incompatibility
+### 1. heterogeneous FL problem — Quantum Latent Space Incompatibility
 Naive FedAvg on quantum RL agents makes every client **worse** than
 training alone. Each client's private encoder independently learns
 incompatible latent representations — after averaging, the VQC receives
@@ -33,7 +33,7 @@ meaningless inputs from every client.
 > *No existing FL paper has identified this failure mode.*
 
 ### 2. CSA — Client Size Asymmetry
-Even after fixing QLSI, pure aligned FL benefits small feeders early
+Even after fixing heterogeneous FL problem, pure aligned FL benefits small feeders early
 and large feeders late — never all clients simultaneously. Gradient
 scale imbalance from different observation dimensions drives the
 SharedHead to favour different clients at different training rounds.
@@ -98,7 +98,7 @@ power-system/
 │           ├── FULL_RESEARCH_COMPENDIUM.md   ← complete technical reference
 │           ├── HYPOTHESES.md
 │           ├── RESULTS_SUMMARY.md
-│           ├── ISSUE_001_LATENT_INCOMPATIBILITY.md   ← QLSI
+│           ├── ISSUE_001_LATENT_INCOMPATIBILITY.md   ← heterogeneous FL problem
 │           ├── ISSUE_002_BARREN_PLATEAU.md
 │           ├── ISSUE_003_PARTIAL_PARTICIPATION.md    ← PAD
 │           ├── FINDING_001_CLIENT_SIZE_TRADEOFF.md   ← CSA
@@ -180,7 +180,7 @@ All hyperparameters in `src/qe_sac_fl/fed_config.py`:
 Condition                  13-bus    34-bus    123-bus    All > local?
 ──────────────────────────────────────────────────────────────────────
 Local only (baseline)      -331.4     -65.5    -5364.4         —
-Unaligned FL               -336.6     -69.6    -5420.5        NO   ← QLSI
+Unaligned FL               -336.6     -69.6    -5420.5        NO   ← heterogeneous FL problem
 Aligned FL, 50 rounds      -326.3     -85.0    -5402.5        NO   ← CSA
 Aligned FL, 200 rounds     -339.5     -69.3    -5251.4        NO   ← CSA reversal
 Partial FL (2/3 clients)   -341.4     -79.8    -5402.9        NO   ← PAD

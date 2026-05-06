@@ -1,0 +1,21 @@
+{
+  "our_qesac": {
+    "reward_mean": -13.798281051189283,
+    "reward_std": 10.909001854754235,
+    "ctrl_ratio_mean": 81.66666666666667,
+    "ctrl_ratio_std": 14.848190125399121,
+    "react_loss_mean": 0.03913682322083972,
+    "react_loss_std": 0.0019903304232268015,
+    "avg_voltage_mean": 0.9984435990701119,
+    "avg_voltage_std": 0.0058561763899610975
+  },
+  "lin_qesac": {
+    "reward": -5.39,
+    "ctrl_ratio": 100.0
+  },
+  "masac_33bus": {
+    "ctrl_ratio": 95.37,
+    "react_loss_mvar": 0.1233,
+    "avg_voltage": 0.9976
+  }
+}

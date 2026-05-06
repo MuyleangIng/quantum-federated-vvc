@@ -54,6 +54,7 @@ _BAT_MODE_NUM = _BAT_ACT_NUM // 2   # 16
 _V_MIN, _V_MAX = 0.95, 1.05
 # PowerGym reward weights for 13-bus
 _POWER_W = 10.0
+_V_W     = 100.0
 _CAP_W   = 1.0 / 33.0
 _REG_W   = 1.0 / 33.0
 _DIS_W   = 6.0 / 33.0
@@ -213,7 +214,7 @@ class VVCEnvOpenDSS(gym.Env):
         vmag    = self._get_voltages()
         n_vviol = int(np.sum((vmag < _V_MIN) | (vmag > _V_MAX)))
 
-        v_reward = float(np.sum(
+        v_reward = _V_W * float(np.sum(
             np.minimum(0.0, _V_MAX - vmag) + np.minimum(0.0, vmag - _V_MIN)
         ))
 

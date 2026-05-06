@@ -201,8 +201,8 @@ disparity, load shape difference) increases, while classical FL degrades faster.
 ### Motivation
 Non-IID data is the central challenge of FL [16][17]. The three feeders
 (13, 34, 123 bus) already have very different observation dimensions and
-topology. QLSI (ISSUE_001) is related to but distinct from classical non-IID
-drift — fixing QLSI does not fix non-IID reward divergence.
+topology. heterogeneous FL problem (ISSUE_001) is related to but distinct from classical non-IID
+drift — fixing heterogeneous FL problem does not fix non-IID reward divergence.
 
 ### Measurement
 - Construct 5 synthetic non-IID levels by scaling load profiles differently
@@ -212,7 +212,7 @@ drift — fixing QLSI does not fix non-IID reward divergence.
 
 ### Expected result
 Aligned FL should outperform classical FL at all severity levels because
-QLSI is the dominant failure mode at high severity. At low severity, classical
+heterogeneous FL problem is the dominant failure mode at high severity. At low severity, classical
 and quantum FL may be similar.
 
 ### Paper references
@@ -224,7 +224,7 @@ and quantum FL may be similar.
 
 ### Novel gap
 First systematic non-IID study for quantum federated RL in power systems.
-Quantifies the boundary between QLSI (structural) and classical FL drift.
+Quantifies the boundary between heterogeneous FL problem (structural) and classical FL drift.
 
 ---
 
@@ -286,8 +286,8 @@ Priority 3 (need new env / longer runs — 1 week):
 
 | # | Contribution | First in literature? |
 |---|---|---|
-| ISSUE_001 | Quantum Latent Space Incompatibility (QLSI) | ✅ Yes |
-| SOLUTION_001 | Shared Encoder Head to fix QLSI | ✅ Yes |
+| ISSUE_001 | Quantum Latent Space Incompatibility (heterogeneous FL problem) | ✅ Yes |
+| SOLUTION_001 | Shared Encoder Head to fix heterogeneous FL problem | ✅ Yes |
 | H3 | 395× communication reduction | ✅ Yes |
 | H4 | FL reduces barren plateau risk | ✅ Yes |
 | H5 | Personalised quantum FL for grid control | ✅ Yes |

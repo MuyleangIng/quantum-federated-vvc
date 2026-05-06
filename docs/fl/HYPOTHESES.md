@@ -202,4 +202,4 @@ local-only and pure aligned FL.
 | H8: non-IID severity | ⬜ planned | — |
 | H9: round breakeven | ⚠️ partial | 13-bus breaks even round 1 |
 
-**Paper-ready results: H3, H5, H6 (as negative finding), ISSUE_001 (QLSI)**
+**Paper-ready results: H3, H5, H6 (as negative finding), ISSUE_001 (heterogeneous FL problem)**
